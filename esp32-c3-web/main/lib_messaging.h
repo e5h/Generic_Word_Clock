@@ -1,27 +1,27 @@
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
  * NAME:
- *      lib_timer.h
+ *      lib_messaging.h
  *
  * PURPOSE:
  *      Part of the general library for projects.
  *
- *      This file defines several common timer routines, abstracting from the
- *      hardware of the given target.
+ *      This file provides context for all participants in the publish-subscribe
+ *      messaging structure of the program. This file allows the routing of
+ *      messages and definition of logic without underlying details of every
+ *      module in the program.
  *
  * DEPENDENCIES:
- *      lib_includes.h
+ *      ---
  *
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*
  * (C) Andrew Bright 2023, github.com/e5h
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
-#ifndef WC_LIB_TIMER_H
+#ifndef WC_LIB_MESSAGING_H
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ Include Files ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-
-#include "lib_includes.h"
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ GLOBAL : Constants and Types ][~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
@@ -35,11 +35,6 @@
 /*][ GLOBAL : Exportable Function Prototypes ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
-extern void     TIMER_TickMsUpdate();
-extern UINT64   TIMER_GetTickMs();
-extern UINT64   TIMER_TimerStartMs( UINT64 duration_ms_u64 );
-extern BOOL     TIMER_TimerHasExpiredMs( UINT64 timestamp_ms_u64 );
-
 /* End */
-#define WC_LIB_TIMER_H
+#define WC_LIB_MESSAGING_H
 #endif

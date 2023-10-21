@@ -1,27 +1,23 @@
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
  * NAME:
- *      ESP_RGB.c
+ *      rgb_rmt.c
  *
  * PURPOSE:
  *      This module is designed to provide simple functions to control RGB leds
  *      using the RMT peripheral of the ESP32.
  *
  * DEPENDENCIES:
- *      ESP_RGB.h
+ *      ---
  *
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*
  * (C) Andrew Bright 2023, github.com/e5h
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-/*][ Feature Switches ][~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-/*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-
-/*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ Include Files ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
-#include "ESP_RGB.h"
+#include "rgb_rmt.h"
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ LOCAL : Constants and Types ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
@@ -29,19 +25,19 @@
 
 /* Struct for an RGBLED encoder */
 typedef struct{
-    rmt_encoder_t base;
-    rmt_encoder_t *byte_encoder;
-    rmt_encoder_t *copy_encoder;
-    rmt_symbol_word_t reset_code;
-    INT32 encoder_state;
-} RGBLED_encoder;
+    rmt_encoder_t       base;
+    rmt_encoder_t       *byte_encoder;
+    rmt_encoder_t       *copy_encoder;
+    rmt_symbol_word_t   reset_code;
+    INT32               encoder_state;
+} RGB_LED_ENCODER;
 
 /* Struct to hold a 24-bit RGB encoded color */
 typedef struct __attribute__ ((packed)){
     UINT8 red_U8;
     UINT8 green_U8;
     UINT8 blue_U8;
-} COLOR_24b;
+} RGB_COLOR_24BIT;
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ LOCAL : Variables ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
@@ -59,39 +55,42 @@ static const UINT8 gamma_lut[101] = {
    240, 245, 250, 255, 255 };
 
 /* All known timing parameters for common RGB LEDs */
-static const RGBLED_params RGBLED_all_params[] = {
-  [LED_WS2812_V1]   = { .pixel_sz_bytes = 3, .T0H = 0.35, .T1H = 0.70, .T0L = 0.80, .T1L = 0.60, .TRS =  50.0},
-  [LED_WS2812B_V1]  = { .pixel_sz_bytes = 3, .T0H = 0.35, .T1H = 0.90, .T0L = 0.90, .T1L = 0.35, .TRS =  50.0},
-  [LED_WS2812B_V2]  = { .pixel_sz_bytes = 3, .T0H = 0.40, .T1H = 0.85, .T0L = 0.85, .T1L = 0.40, .TRS =  50.0},
-  [LED_WS2812B_V3]  = { .pixel_sz_bytes = 3, .T0H = 0.45, .T1H = 0.85, .T0L = 0.85, .T1L = 0.45, .TRS =  50.0},
-  [LED_WS2813_V1]   = { .pixel_sz_bytes = 3, .T0H = 0.35, .T1H = 0.80, .T0L = 0.35, .T1L = 0.35, .TRS = 300.0},
-  [LED_WS2813_V2]   = { .pixel_sz_bytes = 3, .T0H = 0.27, .T1H = 0.80, .T0L = 0.80, .T1L = 0.27, .TRS = 300.0},
-  [LED_WS2813_V3]   = { .pixel_sz_bytes = 3, .T0H = 0.27, .T1H = 0.63, .T0L = 0.63, .T1L = 0.27, .TRS = 300.0},
-  [LED_SK6812_V1]   = { .pixel_sz_bytes = 3, .T0H = 0.30, .T1H = 0.60, .T0L = 0.90, .T1L = 0.60, .TRS =  80.0},
-  [LED_PI554FCH]    = { .pixel_sz_bytes = 3, .T0H = 0.30, .T1H = 0.60, .T0L = 0.90, .T1L = 0.60, .TRS =  80.0},
+static const RGB_LED_TYPE_PARAMS RGB_LED_all_params_S[] = {
+    [LED_WS2812_V1]   = { .pixel_sz_bytes = 3, .T0H = 0.35, .T1H = 0.70, .T0L = 0.80, .T1L = 0.60, .TRS =  50.0},
+    [LED_WS2812B_V1]  = { .pixel_sz_bytes = 3, .T0H = 0.35, .T1H = 0.90, .T0L = 0.90, .T1L = 0.35, .TRS =  50.0},
+    [LED_WS2812B_V2]  = { .pixel_sz_bytes = 3, .T0H = 0.40, .T1H = 0.85, .T0L = 0.85, .T1L = 0.40, .TRS =  50.0},
+    [LED_WS2812B_V3]  = { .pixel_sz_bytes = 3, .T0H = 0.45, .T1H = 0.85, .T0L = 0.85, .T1L = 0.45, .TRS =  50.0},
+    [LED_WS2813_V1]   = { .pixel_sz_bytes = 3, .T0H = 0.35, .T1H = 0.80, .T0L = 0.35, .T1L = 0.35, .TRS = 300.0},
+    [LED_WS2813_V2]   = { .pixel_sz_bytes = 3, .T0H = 0.27, .T1H = 0.80, .T0L = 0.80, .T1L = 0.27, .TRS = 300.0},
+    [LED_WS2813_V3]   = { .pixel_sz_bytes = 3, .T0H = 0.27, .T1H = 0.63, .T0L = 0.63, .T1L = 0.27, .TRS = 300.0},
+    [LED_SK6812_V1]   = { .pixel_sz_bytes = 3, .T0H = 0.30, .T1H = 0.60, .T0L = 0.90, .T1L = 0.60, .TRS =  80.0},
+    [LED_PI554FCH]    = { .pixel_sz_bytes = 3, .T0H = 0.30, .T1H = 0.60, .T0L = 0.90, .T1L = 0.60, .TRS =  80.0},
 };
 
 /* Definitions for default colors, (0.0 - 1.0) = (0 - 255) */
-const COLOR_pct Red         = {.r = 1.0, .g = 0.0, .b = 0.0};
-const COLOR_pct Orange      = {.r = 1.0, .g = 0.5, .b = 0.0};
-const COLOR_pct Yellow      = {.r = 1.0, .g = 1.0, .b = 0.0};
-const COLOR_pct Lime        = {.r = 0.5, .g = 1.0, .b = 0.0};
-const COLOR_pct Green       = {.r = 0.0, .g = 1.0, .b = 0.0};
-const COLOR_pct Mint        = {.r = 0.0, .g = 1.0, .b = 0.5};
-const COLOR_pct Cyan        = {.r = 0.0, .g = 1.0, .b = 1.0};
-const COLOR_pct Azure       = {.r = 0.0, .g = 0.5, .b = 1.0};
-const COLOR_pct Blue        = {.r = 0.0, .g = 0.0, .b = 1.0};
-const COLOR_pct Purple      = {.r = 0.5, .g = 0.0, .b = 1.0};
-const COLOR_pct Pink        = {.r = 1.0, .g = 0.0, .b = 1.0};
-const COLOR_pct Rose        = {.r = 1.0, .g = 0.0, .b = 0.5};
+const RGB_COLOR_PCT RGB_LED_default_colors_S[] = {
+    {.r = 1.0, .g = 0.0, .b = 0.0}, /* COLOR_Red */
+    {.r = 1.0, .g = 0.5, .b = 0.0}, /* COLOR_Orange */
+    {.r = 1.0, .g = 1.0, .b = 0.0}, /* COLOR_Yellow */
+    {.r = 0.5, .g = 1.0, .b = 0.0}, /* COLOR_Lime */
+    {.r = 0.0, .g = 1.0, .b = 0.0}, /* COLOR_Green */
+    {.r = 0.0, .g = 1.0, .b = 0.5}, /* COLOR_Mint */
+    {.r = 0.0, .g = 1.0, .b = 1.0}, /* COLOR_Cyan */
+    {.r = 0.0, .g = 0.5, .b = 1.0}, /* COLOR_Azure */
+    {.r = 0.0, .g = 0.0, .b = 1.0}, /* COLOR_Blue */
+    {.r = 0.5, .g = 0.0, .b = 1.0}, /* COLOR_Purple */
+    {.r = 1.0, .g = 0.0, .b = 1.0}, /* COLOR_Pink */
+    {.r = 1.0, .g = 0.0, .b = 0.5}  /* COLOR_Rose */
+};
 
-static COLOR_24b RGBLED_colors[ RGB_LED_COUNT ];        /* Saved color for each pixel */
-static UINT8 led_pixel_buffer[ RGB_LED_COUNT * 3 ];     /* Entire LED pixel buffer to send */
+static RGB_COLOR_PCT pixel_colors_pct_S[ RGB_LED_COUNT ];       /* Saved color for each pixel */
+static RGB_COLOR_24BIT pixel_colors_24bit_S[ RGB_LED_COUNT ];   /* Converted color for each pixel */
+static UINT8 pixel_tx_buffer_u8[ RGB_LED_COUNT * 3 ];           /* Entire LED pixel buffer to send */
 
 static rmt_channel_handle_t RGB_channel_handle = NULL;
 static rmt_encoder_handle_t RGB_encoder_handle = NULL;
 
-static RGBLED_params RGB_params;
+static RGB_LED_TYPE_PARAMS RGB_LED_params_S;
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ Function Definitions ][~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
@@ -101,7 +100,7 @@ static RGBLED_params RGB_params;
 static size_t RGB_RMT_encode(rmt_encoder_t *encoder, rmt_channel_handle_t channel,
     const void *primary_data, size_t data_size, rmt_encode_state_t *ret_state)
 {
-    RGBLED_encoder* RGB_encoder = __containerof( encoder, RGBLED_encoder, base );
+    RGB_LED_ENCODER* RGB_encoder = __containerof( encoder, RGB_LED_ENCODER, base );
 
     /* Set up encoder handles for the different stages */
     rmt_encoder_handle_t byte_encoder = RGB_encoder->byte_encoder;
@@ -160,7 +159,7 @@ static size_t RGB_RMT_encode(rmt_encoder_t *encoder, rmt_channel_handle_t channe
 /* Local encoder function */
 static esp_err_t RGB_RMT_delete( rmt_encoder_t* encoder )
 {
-    RGBLED_encoder* RGB_encoder = __containerof( encoder, RGBLED_encoder, base );
+    RGB_LED_ENCODER* RGB_encoder = __containerof( encoder, RGB_LED_ENCODER, base );
     rmt_del_encoder( RGB_encoder->byte_encoder );
     rmt_del_encoder( RGB_encoder->copy_encoder );
     free(RGB_encoder);
@@ -170,7 +169,7 @@ static esp_err_t RGB_RMT_delete( rmt_encoder_t* encoder )
 /* Local encoder function */
 static esp_err_t RGB_RMT_reset( rmt_encoder_t* encoder )
 {
-    RGBLED_encoder* RGB_encoder = __containerof( encoder, RGBLED_encoder, base );
+    RGB_LED_ENCODER* RGB_encoder = __containerof( encoder, RGB_LED_ENCODER, base );
     rmt_encoder_reset( RGB_encoder->byte_encoder );
     rmt_encoder_reset( RGB_encoder->copy_encoder );
     RGB_encoder->encoder_state = 0;
@@ -178,12 +177,12 @@ static esp_err_t RGB_RMT_reset( rmt_encoder_t* encoder )
 }
 
 /* Local encoder function */
-static esp_err_t RGB_RMT_setup_encoder( RGBLED_params* params, rmt_encoder_handle_t* ret_encoder )
+static esp_err_t RGB_RMT_setup_encoder( RGB_LED_TYPE_PARAMS* params, rmt_encoder_handle_t* ret_encoder )
 {
     esp_err_t return_status = ESP_OK;
 
-    RGBLED_encoder* RGB_encoder = NULL;
-    RGB_encoder = calloc( 1, sizeof(RGBLED_encoder) );
+    RGB_LED_ENCODER* RGB_encoder = NULL;
+    RGB_encoder = calloc( 1, sizeof(RGB_LED_ENCODER) );
 
     /* (1/4) Set up the base encoder */
     RGB_encoder->base.encode = RGB_RMT_encode;
@@ -229,8 +228,8 @@ static esp_err_t RGB_RMT_setup_encoder( RGBLED_params* params, rmt_encoder_handl
 }
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
- * NAME IN ENGLISH:
- *      "Initialize the RGB leds"
+ * SUMMARY:
+ *      RGB_LED_Init() - "Initialize the RGB leds"
  *
  * DESCRIPTION:
  *      Initializes the RGB leds
@@ -241,13 +240,13 @@ static esp_err_t RGB_RMT_setup_encoder( RGBLED_params* params, rmt_encoder_handl
  * OUTPUTS:
  *      none
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-void RGBLED_Init()
+STATUS_E RGB_LED_Init()
 {
     /* Set up the RGBLED params */
-    RGB_params = RGBLED_all_params[ LED_WS2812B_V1 ];
+    RGB_LED_params_S = RGB_LED_all_params_S[ RGB_LED_TYPE ];
 
     /* 1 - Install RMT TX Channel */
-    ESP_LOGI("RGBLED", "RMT TX: install");
+    ESP_LOGI("RGB_LED_Init()", "RMT TX: install");
     rmt_tx_channel_config_t RGB_channel_config;
     RGB_channel_config.gpio_num = RGB_LED_PIN;
     RGB_channel_config.clk_src = RMT_CLK_SRC_DEFAULT;
@@ -257,60 +256,62 @@ void RGBLED_Init()
     ESP_ERROR_CHECK( rmt_new_tx_channel( &RGB_channel_config, &RGB_channel_handle ) );
 
     /* 2 - Enable RMT TX channel */
-    ESP_LOGI("RGBLED", "RMT tx: enable");
+    ESP_LOGI("RGB_LED_Init()", "RMT tx: enable");
     ESP_ERROR_CHECK( rmt_enable( RGB_channel_handle ) );
 
     /* 3 - Install RGB RMT encoder */
-    ESP_ERROR_CHECK( RGB_RMT_setup_encoder( &RGB_params, &RGB_encoder_handle ) );
+    ESP_ERROR_CHECK( RGB_RMT_setup_encoder( &RGB_LED_params_S, &RGB_encoder_handle ) );
 
     /* Set the initial colors to off (0, 0, 0) */
-    memset(led_pixel_buffer, 0, sizeof(led_pixel_buffer));
-    RGBLED_TransmitColors();
+    memset(pixel_tx_buffer_u8, 0, sizeof(pixel_tx_buffer_u8));
+    RGB_LED_TransmitColors();
+
+    return STATUS_OK;
 }
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
- * NAME IN ENGLISH:
- *      "Set the color of an RGB LED"
+ * SUMMARY:
+ *      RGB_LED_SetPixelColor() - "Set the color of an RGB LED"
  *
  * DESCRIPTION:
- *      Sets a COLOR_24b corresponding to the LED
+ *      Sets a RGB_COLOR_24BIT corresponding to the LED
  *
  * INPUTS:
  *      (INT32) index of the LED
- *      (COLOR_pct) RGB color proportions
+ *      (RGB_COLOR_PCT) RGB color proportions
  *      (UINT8) visible brightness of the color
  *
  * OUTPUTS:
  *      none
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-void RGBLED_SetColor(INT32 index, COLOR_pct color, UINT8 brightness)
+STATUS_E RGB_LED_SetPixelColor(INT32 index_i32, RGB_COLOR_PCT color_S, UINT8 brightness_u8 )
 {
     /* If the passed index is greater than number of LEDs */
-    if( index >= RGB_LED_COUNT ){
-        ESP_LOGE("RGBLED set color", "Index out of bounds");
+    if( index_i32 >= RGB_LED_COUNT ){
+        ESP_LOGE("RGB_LED_SetPixelColor()", "Index out of bounds");
         return;
     }
 
-    COLOR_24b rgb_color;
+    RGB_COLOR_24BIT rgb_color;
     UINT8 r_lut;
     UINT8 g_lut;
     UINT8 b_lut;
 
     /* Reduce brightness to max 100% */
-    if( brightness > 100 )
+    if( brightness_u8 > 100 )
     {
-        brightness = 100;
+        brightness_u8 = 100;
     }
 
     /* Get the LUT indices */
-    r_lut = (UINT8)(color.r * brightness);
-    g_lut = (UINT8)(color.g * brightness);
-    b_lut = (UINT8)(color.b * brightness);
+    r_lut = (UINT8)(color_S.r * brightness_u8);
+    g_lut = (UINT8)(color_S.g * brightness_u8);
+    b_lut = (UINT8)(color_S.b * brightness_u8);
 
     /* Check for OOB LUT errors */
     if( r_lut > 100 || g_lut > 100 || b_lut > 100 )
     {
-        ESP_LOGE("RGBLED set color", "LUT index out of bounds");
+        ESP_LOGE("RGB_LED_SetPixelColor()", "LUT index out of bounds");
     }
 
     /* Get the actual 0-255 RGB values from the LUT */
@@ -319,16 +320,39 @@ void RGBLED_SetColor(INT32 index, COLOR_pct color, UINT8 brightness)
     rgb_color.blue_U8 = gamma_lut[b_lut];
 
     /* Set the color */
-    RGBLED_colors[index] = rgb_color;
+    pixel_colors_pct_S[index_i32] = color_S;
+    pixel_colors_24bit_S[index_i32] = rgb_color;
+
+    return STATUS_OK;
 }
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
- * NAME IN ENGLISH:
- *      "Transmit all of the saved colors to the RGB leds"
+ * SUMMARY:
+ *      RGB_LED_ModifyPixelBrightness() - "Set the brightness of an RGB LED"
  *
  * DESCRIPTION:
- *      Goes through the array of COLOR_24b variables and sends each one to the
- *      respective LED.
+ *      Sets a RGB_COLOR_24BIT corresponding to the LED, based on the newly
+ *      provided brightness value.
+ *
+ * INPUTS:
+ *      (INT32) index of the LED
+ *      (UINT8) visible brightness of the color
+ *
+ * OUTPUTS:
+ *      none
+ *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
+STATUS_E RGB_LED_ModifyPixelBrightness(INT32 index_i32, UINT8 brightness_u8)
+{
+    return RGB_LED_SetPixelColor(index_i32, pixel_colors_pct_S[index_i32], brightness_u8);
+}
+
+/*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
+ * SUMMARY:
+ *      RGB_LED_TransmitColors() - "Convert colors to pixel buffer and transmit"
+ *
+ * DESCRIPTION:
+ *      Goes through the array of RGB_COLOR_24BIT variables, sets the pixel buffer,
+ *      and then transmits them using the rmt peripheral.
  *
  * INPUTS:
  *      none
@@ -336,14 +360,14 @@ void RGBLED_SetColor(INT32 index, COLOR_pct color, UINT8 brightness)
  * OUTPUTS:
  *      none
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-void RGBLED_TransmitColors()
+STATUS_E RGB_LED_TransmitColors()
 {
     /* Create a pixel buffer and populate it with 8-bit values */
-    for( INT32 i = 0; i < RGB_LED_COUNT; i += 1 )
+    for( INT32 pixel = 0; pixel < RGB_LED_COUNT; pixel += 1 )
     {
-        led_pixel_buffer[ ( i * 3 ) + 0 ] = RGBLED_colors[ i ].green_U8;
-        led_pixel_buffer[ ( i * 3 ) + 1 ] = RGBLED_colors[ i ].red_U8;
-        led_pixel_buffer[ ( i * 3 ) + 2 ] = RGBLED_colors[ i ].blue_U8;
+        pixel_tx_buffer_u8[ ( pixel * 3 ) + 0 ] = pixel_colors_24bit_S[ pixel ].green_U8;
+        pixel_tx_buffer_u8[ ( pixel * 3 ) + 1 ] = pixel_colors_24bit_S[ pixel ].red_U8;
+        pixel_tx_buffer_u8[ ( pixel * 3 ) + 2 ] = pixel_colors_24bit_S[ pixel ].blue_U8;
     }
 
     /* Set up the transmission configuration */
@@ -355,8 +379,31 @@ void RGBLED_TransmitColors()
     ESP_ERROR_CHECK( rmt_transmit(
         RGB_channel_handle,
         RGB_encoder_handle,
-        led_pixel_buffer,
-        sizeof(led_pixel_buffer),
+        pixel_tx_buffer_u8,
+        sizeof(pixel_tx_buffer_u8),
         &tx_config
     ) );
+
+    return STATUS_OK;
+}
+
+/*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
+ * SUMMARY:
+ *      RGB_LED_Wipe() - "Wipe all colors and transmit"
+ *
+ * DESCRIPTION:
+ *      Sets pixel buffer to all zeros and transmits.
+ *
+ * INPUTS:
+ *      none
+ *
+ * OUTPUTS:
+ *      none
+ *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
+STATUS_E RGB_LED_Wipe()
+{
+    /* Set the colors to off (0, 0, 0) */
+    memset(pixel_colors_24bit_S, 0, sizeof(pixel_colors_24bit_S ) );
+    memset(pixel_tx_buffer_u8, 0, sizeof(pixel_tx_buffer_u8 ) );
+    return RGB_LED_TransmitColors();
 }

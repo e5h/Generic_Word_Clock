@@ -1,45 +1,61 @@
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
  * NAME:
- *      lib_timer.h
+ *      task_display.h
  *
  * PURPOSE:
- *      Part of the general library for projects.
- *
- *      This file defines several common timer routines, abstracting from the
- *      hardware of the given target.
+ *      This module encapsulates the clock display task.
  *
  * DEPENDENCIES:
- *      lib_includes.h
+ *      rgb_rmt.h
  *
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*
  * (C) Andrew Bright 2023, github.com/e5h
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
-#ifndef WC_LIB_TIMER_H
+#ifndef WC_TASK_DISPLAY_H
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ Include Files ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
-#include "lib_includes.h"
+#include "rgb_rmt.h"
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ GLOBAL : Constants and Types ][~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
+#define MAX_WORD_LENGTH (10)
+
+typedef enum{
+    WORD_PREFIX         = 0x01,
+    WORD_CUSTOM         = 0x02,
+    WORD_HOUR           = 0x04,
+    WORD_SUFFIX         = 0x08
+} CLOCK_WORD_TYPE;
+
+typedef struct{
+    STRING              word_str;
+    UINT8               word_length_u8;
+    CLOCK_WORD_TYPE     word_type_E;
+    UINT8               word_pixels_u8[ MAX_WORD_LENGTH ];
+} CLOCK_WORD;
+
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ GLOBAL : Exportable Variables ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
+
+// TODO: message queue to main supervisor
+// TODO: freertos variables to main supervisor
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ GLOBAL : Exportable Function Prototypes ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
-extern void     TIMER_TickMsUpdate();
-extern UINT64   TIMER_GetTickMs();
-extern UINT64   TIMER_TimerStartMs( UINT64 duration_ms_u64 );
-extern BOOL     TIMER_TimerHasExpiredMs( UINT64 timestamp_ms_u64 );
+extern BOOL CLOCK_Init( void );
+extern BOOL CLOCK_Tick( void );
+extern BOOL CLOCK_UpdateTime( void );
+extern BOOL CLOCK_TestWords( RGB_COLOR_PCT color );
 
 /* End */
-#define WC_LIB_TIMER_H
+#define WC_TASK_DISPLAY_H
 #endif

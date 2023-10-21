@@ -13,17 +13,18 @@
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-/*][ Feature Switches ][~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-/*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-
-/*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ Include Files ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
 #include <stdio.h>
 #include "lib_includes.h"
 
-#include "ESP_RGB.h"
+#include "rgb_rmt.h"
+#include "cfg_clock.h"
+
+#include "task_display.h"
+// task device
+// task network
 
 #include "esp_timer.h"
 
@@ -44,10 +45,12 @@ typedef struct{
     };
 } MSG_DATA;
 
-#define FLAG_1_MS                   (BIT0)  /* Flag set on 1ms timer callback */
-#define FLAG_10_MS                  (BIT1)  /* Flag set on 10ms timer callback */
-#define FLAG_100_MS                 (BIT2)  /* Flag set on 100ms timer callback */
-#define FLAG_1_SEC                  (BIT3)  /* Flag set on 1s timer callback */
+typedef enum{
+    FLAG_1_MS           = 0x01, /* Flag set on 1ms timer callback */
+    FLAG_10_MS          = 0x02, /* Flag set on 10ms timer callback */
+    FLAG_100_MS         = 0x04, /* Flag set on 100ms timer callback */
+    FLAG_1_SEC          = 0x08, /* Flag set on 1s timer callback */
+} E_THREAD_FLAG;
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ LOCAL : Variables ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
@@ -85,7 +88,7 @@ QueueHandle_t q_order_rgbleds_task;
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 void timer_1ms_callback(void *param)
 {
-    TIMER_tickMsUpdate(); /* Updates the 1ms tick inside lib_timer */
+    TIMER_TickMsUpdate(); /* Updates the 1ms tick inside lib_timer */
     //xEventGroupSetBits( rgbleds_flags, FLAG_1_MS );
 }
 
@@ -122,7 +125,7 @@ void timer_100ms_callback(void *param)
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 void timer_1sec_callback(void *param)
 {
-    // Set event group bits
+    xEventGroupSetBits( rgbleds_flags, FLAG_1_SEC );
 }
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
@@ -144,10 +147,12 @@ void task_rgbleds( void* params )
     MSG_DATA rec_msg; /* Variable for receiving a message */
 
     EventBits_t flags_to_wait;
-    flags_to_wait = FLAG_100_MS;
+    flags_to_wait = FLAG_100_MS | FLAG_1_SEC;
 
     UINT8 active_leds[10] = {0}; // Index of which LEDs are active
-    COLOR_pct led_color = Cyan;
+    
+    UINT8 colorIndex_UC = COLOR_Cyan;
+    RGB_COLOR_PCT led_color;
 
     while(1)
     {
@@ -157,34 +162,54 @@ void task_rgbleds( void* params )
         /* FLAG_100_MS - update */
         if( xEventGroupGetBits( rgbleds_flags ) & FLAG_100_MS )
         {
-            /* Increment the first led */
-            active_leds[ 0 ]++;
-            if( active_leds[ 0 ] > ( RGB_LED_COUNT - 1 ) )
-            {
-                active_leds[ 0 ] -= 100;
-            }
+            // /* Increment the first led */
+            // active_leds[ 0 ]++;
+            // if( active_leds[ 0 ] > ( RGB_LED_COUNT - 1 ) )
+            // {
+            //     active_leds[ 0 ] -= 100;
+            // }
 
-            /* Increment the rest of the leds */
-            for( INT8 i = 1; i < 10; i++ )
-            {
-                active_leds[ i ] = active_leds[ i - 1 ] + 1;
-                if( active_leds[ i ] > ( RGB_LED_COUNT - 1 ) )
-                {
-                    active_leds[ i ] -= 100;
-                }
-            }
+            // /* Increment the rest of the leds */
+            // for( INT8 i = 1; i < 10; i++ )
+            // {
+            //     active_leds[ i ] = active_leds[ i - 1 ] + 1;
+            //     if( active_leds[ i ] > ( RGB_LED_COUNT - 1 ) )
+            //     {
+            //         active_leds[ i ] -= 100;
+            //     }
+            // }
 
-            /* Set the LED colors */
-            for( INT8 i = 9; i >= 0; i-- )
-            {
-                RGBLED_SetColor( active_leds[ i ], led_color, 10 * (i + 1) );
-            }
+            // /* Set the LED colors */
+            // for( INT8 i = 9; i >= 0; i-- )
+            // {
+            //     RGB_LED_SetPixelColor( active_leds[ i ], led_color, 10 * (i + 1) );
+            // }
 
-            /* Write the LEDs to the screen */
-            RGBLED_TransmitColors();
+            // /* Write the LEDs to the screen */
+            // RGB_LED_TransmitColors();
+
+            // /* Log the leading LED */
+            // ESP_LOGI( LOG_TAG, "LED index: %d", active_leds[9] );
 
             /* Clear FLAG_100_MS */
             xEventGroupClearBits( rgbleds_flags, FLAG_100_MS );
+        }
+
+        /* FLAG_1_SEC - update */
+        if( xEventGroupGetBits( rgbleds_flags ) & FLAG_1_SEC )
+        {
+            led_color = RGB_LED_default_colors_S[ colorIndex_UC ];
+
+            CLOCK_TestWords( led_color );
+
+            if( ++colorIndex_UC >= NUM_DEFAULT_COLORS )
+            {
+                colorIndex_UC = 0;
+                CLOCK_UpdateTime(); // test a phrase
+            }
+
+            /* Clear FLAG_1_SEC */
+            xEventGroupClearBits( rgbleds_flags, FLAG_1_SEC );
         }
     }
 }
@@ -207,7 +232,7 @@ void app_main(void)
     q_order_rgbleds_task = xQueueCreate( 5, sizeof(MSG_DATA) );
 
     /* Set up other peripherals */
-    RGBLED_Init();
+    RGB_LED_Init();
 
     /* Set up timers */
     /* 1 ms timer */

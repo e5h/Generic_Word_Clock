@@ -9,14 +9,13 @@
  *      their portable definitions.
  *
  * DEPENDENCIES:
- *      none
+ *      ---
  *
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*
  * (C) Andrew Bright 2023, github.com/e5h
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
-#ifndef NXN_LIB_TYPES_H
-#define NXN_LIB_TYPES_H
+#ifndef WC_LIB_TYPES_H
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ Feature Switches ][~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
@@ -42,31 +41,39 @@
 
 /* Append the bracketed types to the end of declared variable names */
 
-typedef int8_t      BOOL;       /* ( _B ) */
-typedef int8_t      CHAR;       /* ( _C ) */
-typedef int8_t      INT8;       /* ( _I8 ) */
-typedef int16_t     INT16;      /* ( _I16 ) */
-typedef int32_t     INT32;      /* ( _I32 ) */
-typedef int64_t     INT64;      /* ( _I64 ) */
+typedef int8_t      BOOL;       /* ( _b ) */
+typedef char        CHAR;       /* ( _c ) */
+typedef int8_t      INT8;       /* ( _i8 ) */
+typedef int16_t     INT16;      /* ( _i16 ) */
+typedef int32_t     INT32;      /* ( _i32 ) */
+typedef int64_t     INT64;      /* ( _i64 ) */
 
-typedef uint8_t*    STRING;     /* ( _STR ) */
-typedef uint8_t     UINT8;      /* ( _U8 ) */
-typedef uint8_t     UCHAR;      /* ( _UC ) */
-typedef uint16_t    UINT16;     /* ( _U16 ) */
-typedef uint32_t    UINT32;     /* ( _U32 ) */
-typedef uint64_t    UINT64;     /* ( _U64 ) */
+typedef char*       STRING;     /* ( _str ) */
+typedef uint8_t     UINT8;      /* ( _u8 ) */
+typedef uint8_t     UCHAR;      /* ( _u8 ) */
+typedef uint16_t    UINT16;     /* ( _u16 ) */
+typedef uint32_t    UINT32;     /* ( _u32 ) */
+typedef uint64_t    UINT64;     /* ( _u64 ) */
 
-typedef void        VOID;       /* ( _V ) */
+typedef void        VOID;       /* ( _v ) */
 
-typedef float       FLOAT32;    /* ( _F32 ) */
-typedef double      FLOAT64;    /* ( _F64 ) */
+typedef float       FLOAT32;    /* ( _f32 ) */
+typedef double      FLOAT64;    /* ( _f64 ) */
 
 #define TRUE        (1)
 #define FALSE       (0)
 
-/*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-/*][ LOCAL : Constants and Types ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-/*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
+/* Function return status enums */
+
+typedef enum{
+    /* Failure codes */
+    
+    STATUS_ERR          = 0,    /* Boolean compatible false */
+
+    /* Success codes */
+    STATUS_OK           = 1,    /* Boolean compatible true */
+
+} STATUS_E;
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ GLOBAL : Exportable Variables ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
@@ -76,4 +83,6 @@ typedef double      FLOAT64;    /* ( _F64 ) */
 /*][ GLOBAL : Exportable Function Prototypes ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
-#endif //NXN_HOMEAUTO_CONSOLE_LIB_TYPES_H
+/* End */
+#define WC_LIB_TYPES_H
+#endif
