@@ -31,9 +31,6 @@
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
 #define RGB_LED_HZ          (10000000)  /* 10Mhz = 0.1us ticks */
-#define RGB_LED_PIN         WC_RGB_LED_PIN
-#define RGB_LED_COUNT       WC_RGB_LED_COUNT
-#define RGB_LED_TYPE        WC_RGB_LED_TYPE
 
 /**
  * Struct to hold a brightness adjustable color

@@ -7,7 +7,7 @@
 
 extern const CLOCK_WORD     CLOCK_words_S[];
 extern const UINT8          CLOCK_num_words_u8;
-extern const UINT8          CLOCK_xy_pixel_u8[][];
+extern const UINT8          CLOCK_xy_pixel_u8[10][10];
 
 #define WC_RGB_LED_PIN      (7)
 #define WC_RGB_LED_COUNT    (100)

@@ -17,7 +17,7 @@
 /*][ Include Files ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
-#include "lib_timer.h"
+#include "lib_includes.h"
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ LOCAL : Constants and Types ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
@@ -97,7 +97,7 @@ extern BOOL TIMER_TimerHasExpiredMs( UINT64 timestamp_ms_u64 )
 {
     UINT64 current_ms_u64;
 
-    current_ms_u64 = TIMER_tick_ms_u64;
+    current_ms_u64 = tick_ms_u64;
 
     if( ( current_ms_u64 < timestamp_ms_u64 ) )
     {

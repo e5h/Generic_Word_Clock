@@ -18,10 +18,15 @@
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
 #include "rgb_rmt.h"
+#include "cfg_clock.h"
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ LOCAL : Constants and Types ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
+
+#define RGB_LED_PIN         WC_RGB_LED_PIN
+#define RGB_LED_COUNT       WC_RGB_LED_COUNT
+#define RGB_LED_TYPE        WC_RGB_LED_TYPE
 
 /* Struct for an RGBLED encoder */
 typedef struct{
@@ -289,7 +294,7 @@ STATUS_E RGB_LED_SetPixelColor(INT32 index_i32, RGB_COLOR_PCT color_S, UINT8 bri
     /* If the passed index is greater than number of LEDs */
     if( index_i32 >= RGB_LED_COUNT ){
         ESP_LOGE("RGB_LED_SetPixelColor()", "Index out of bounds");
-        return;
+        return STATUS_ERR;
     }
 
     RGB_COLOR_24BIT rgb_color;
@@ -343,7 +348,8 @@ STATUS_E RGB_LED_SetPixelColor(INT32 index_i32, RGB_COLOR_PCT color_S, UINT8 bri
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 STATUS_E RGB_LED_ModifyPixelBrightness(INT32 index_i32, UINT8 brightness_u8)
 {
-    return RGB_LED_SetPixelColor(index_i32, pixel_colors_pct_S[index_i32], brightness_u8);
+    STATUS_E status = RGB_LED_SetPixelColor(index_i32, pixel_colors_pct_S[index_i32], brightness_u8);
+    return status;
 }
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
@@ -402,8 +408,11 @@ STATUS_E RGB_LED_TransmitColors()
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 STATUS_E RGB_LED_Wipe()
 {
+    STATUS_E status;
     /* Set the colors to off (0, 0, 0) */
     memset(pixel_colors_24bit_S, 0, sizeof(pixel_colors_24bit_S ) );
     memset(pixel_tx_buffer_u8, 0, sizeof(pixel_tx_buffer_u8 ) );
-    return RGB_LED_TransmitColors();
+    status = RGB_LED_TransmitColors();
+
+    return status;
 }

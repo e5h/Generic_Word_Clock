@@ -152,7 +152,7 @@ void task_rgbleds( void* params )
     UINT8 active_leds[10] = {0}; // Index of which LEDs are active
     
     UINT8 colorIndex_UC = COLOR_Cyan;
-    RGB_COLOR_PCT led_color;
+    RGB_COLOR_PCT led_color = RGB_LED_default_colors_S[ colorIndex_UC ];
 
     while(1)
     {
@@ -164,16 +164,21 @@ void task_rgbleds( void* params )
         {
             // /* Increment the first led */
             // active_leds[ 0 ]++;
-            // if( active_leds[ 0 ] > ( RGB_LED_COUNT - 1 ) )
+            // if( active_leds[ 0 ] > ( WC_RGB_LED_COUNT - 1 ) )
             // {
             //     active_leds[ 0 ] -= 100;
+            //     if( ++colorIndex_UC >= NUM_DEFAULT_COLORS )
+            //     {
+            //         colorIndex_UC = 0;
+            //     }
+            //     led_color = RGB_LED_default_colors_S[ colorIndex_UC ];
             // }
 
             // /* Increment the rest of the leds */
             // for( INT8 i = 1; i < 10; i++ )
             // {
             //     active_leds[ i ] = active_leds[ i - 1 ] + 1;
-            //     if( active_leds[ i ] > ( RGB_LED_COUNT - 1 ) )
+            //     if( active_leds[ i ] > ( WC_RGB_LED_COUNT - 1 ) )
             //     {
             //         active_leds[ i ] -= 100;
             //     }
@@ -270,5 +275,5 @@ void app_main(void)
     /* Set up interrupts */
 
     /* Set up tasks */
-    xTaskCreate( &task_rgbleds, "RGB Led Task", 2048, NULL, 2, &h_task_rgbleds );
+    xTaskCreate( &task_rgbleds, "RGB Led Task", 4096, NULL, 2, &h_task_rgbleds );
 }
