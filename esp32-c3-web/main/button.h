@@ -10,7 +10,7 @@
  *      ---
  *
  *==============================================================================
- * (C) Andrew Bright 2023, github.com/e5h
+ * (C) Andrew Bright 2024, github.com/e5h
  *==============================================================================
  *=============================================================================*/
 
@@ -25,6 +25,10 @@
 /*=============================================================================*/
 /*][ GLOBAL : Constants and Types ][===========================================*/
 /*=============================================================================*/
+
+enum { BTN_DEBOUNCE_MS  = 0 };
+enum { BTN_HOLD_MS      = 500 };
+enum { BTN_REPEAT_MS    = 100 };
 
 /* Buttons on the control board */
 typedef enum{
@@ -103,13 +107,13 @@ typedef struct{
 /*][ GLOBAL : Exportable Function Prototypes ][================================*/
 /*=============================================================================*/
 
-STATUS_E    BUTTON_init();
-STATUS_E    BUTTON_poll();
-STATUS_E    BUTTON_update_state_machine();
-STATUS_E    BUTTON_send_events_to_queue();
+extern STATUS_E    BUTTON_init();
+extern STATUS_E    BUTTON_poll();
+extern STATUS_E    BUTTON_update_state_machine();
+extern STATUS_E    BUTTON_send_events_to_queue();
 
-BOOL        BUTTON_check_event( BUTTON_EVENT_T button_event_s, BUTTON_E button_to_check_e, BUTTON_EVENT_E event_to_check_e );
-INT32       BUTTON_event_to_string( BUTTON_EVENT_T button_event_s, CHAR* p_string_c, INT32 len_i32 );
+extern BOOL        BUTTON_check_event( BUTTON_EVENT_T* p_button_event_s, BUTTON_E button_to_check_e, BUTTON_EVENT_E event_to_check_e );
+extern INT32       BUTTON_event_to_string( BUTTON_EVENT_T* p_button_event_s, CHAR* p_string_c, INT32 len_i32 );
 
 /* End */
 #define WC_BUTTON_H
