@@ -112,7 +112,7 @@ extern STATUS_E    BUTTON_poll();
 extern STATUS_E    BUTTON_update_state_machine();
 extern STATUS_E    BUTTON_send_events_to_queue();
 
-extern BOOL        BUTTON_check_event( BUTTON_EVENT_T* p_button_event_s, BUTTON_E button_to_check_e, BUTTON_EVENT_E event_to_check_e );
+extern BOOL        BUTTON_check_event( BUTTON_EVENT_T* p_button_event_s, BUTTON_E button_to_check_e, BUTTON_EVENT_E events_to_check_e );
 extern INT32       BUTTON_event_to_string( BUTTON_EVENT_T* p_button_event_s, CHAR* p_string_c, INT32 len_i32 );
 
 /* End */

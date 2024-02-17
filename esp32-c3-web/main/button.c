@@ -122,7 +122,7 @@ STATUS_E BUTTON_init()
     {
         p_button_statuses_s[ button_index_i32 ].state_info_s.state_timer_u64 = 0;
         p_button_statuses_s[ button_index_i32 ].state_info_s.prev_active_b = FALSE;
-        p_button_statuses_s[ button_index_i32 ].state_info_s.edge_e = EDGE_NONE;
+        p_button_statuses_s[ button_index_i32 ].state_info_s.edge_e = BTN_EDGE_NONE;
         p_button_statuses_s[ button_index_i32 ].state_info_s.last_state_e = BTN_STATE_IDLE;
         p_button_statuses_s[ button_index_i32 ].state_info_s.state_e = BTN_STATE_IDLE;
         p_button_statuses_s[ button_index_i32 ].event_s.button_e = button_index_i32;
@@ -438,7 +438,24 @@ STATUS_E BUTTON_send_events_to_queue()
  * OUTPUT GUARANTEES:
  *      Will return true (1) if there is a match, false (0) otherwise.
  **===< global >===============================================================*/
-BOOL BUTTON_check_event( BUTTON_EVENT_T* p_button_event_s, BUTTON_E button_to_check_e, BUTTON_EVENT_E event_to_check_e );
+BOOL BUTTON_check_event( BUTTON_EVENT_T* p_button_event_s, BUTTON_E button_to_check_e, BUTTON_EVENT_E events_to_check_e )
+{
+    BUTTON_E        received_button_e   = p_button_event_s->button_e;   // Received buttton
+    BUTTON_EVENT_E  received_event_e    = p_button_event_s->event_e;    // Received event type
+    BOOL            event_match_b       = FALSE;                        // Is it a match?
+
+    /* Compare buttons */
+    if( received_button_e == button_to_check_e )
+    {
+        /* Compare event bits */
+        if( ( received_event_e & events_to_check_e ) == received_event_e )
+        {
+            event_match_b = TRUE;
+        }
+    }
+
+    return event_match_b;
+}
 
 /**===< global >===============================================================
  * NAME:
@@ -454,8 +471,64 @@ BOOL BUTTON_check_event( BUTTON_EVENT_T* p_button_event_s, BUTTON_E button_to_ch
  * 
  * OUTPUT GUARANTEES:
  *      Will return the number of characters printed into the buffer.
+ *          - Returns -1 if an error occurs
  *      Will not print more than the INT32 limit into the buffer.
  **===< global >===============================================================*/
-INT32 BUTTON_event_to_string( BUTTON_EVENT_T* p_button_event_s, CHAR* p_string_c, INT32 len_i32 );
+INT32 BUTTON_event_to_string( BUTTON_EVENT_T* p_button_event_s, CHAR* p_string_c, INT32 len_i32 )
+{
+    if( p_string_c == NULL || len_i32 <= 0 ){ return -1; }
+
+    BUTTON_E    button_e                = p_button_event_s->button_e;
+    INT32       num_chars_printed_i32   = 0;
+    CHAR        p_event_string_c[ 20 ];
+
+    switch( p_button_event_s->event_e )
+    {
+        case( BTN_NO_EVENT ):
+        {
+            snprintf( p_event_string_c, 20 - 1, "no event." );
+            break;
+        }
+
+        case( BTN_PRESSED ):
+        {
+            snprintf( p_event_string_c, 20 - 1, "being pressed..." );
+            break;
+        }
+
+        case( BTN_PRESS_RELEASED ):
+        {
+            snprintf( p_event_string_c, 20 - 1, "was pressed." );
+            break;
+        }
+
+        case( BTN_HELD ):
+        {
+            snprintf( p_event_string_c, 20 - 1, "being held..." );
+            break;
+        }
+
+        case( BTN_HOLD_RELEASE ):
+        {
+            snprintf( p_event_string_c, 20 - 1, "was held." );
+            break;
+        }
+
+        case( BTN_REPEAT ):
+        {
+            snprintf( p_event_string_c, 20 - 1, "repeated!" );
+            break;
+        }
+
+        default:
+        {
+            snprintf( p_event_string_c, 20 - 1, "ERROR" );
+            break;
+        }
+    }
+
+    num_chars_printed_i32 = snprintf( p_string_c, len_i32 - 1, "%s %s", p_button_names_c[ button_e ], p_event_string_c );
+    return num_chars_printed_i32;
+}
 
 /* End */
