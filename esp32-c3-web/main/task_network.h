@@ -1,21 +1,18 @@
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
  * NAME:
- *      lib_timer.h
+ *      task_network.h
  *
  * PURPOSE:
- *      Part of the general library for projects.
- *
- *      This file defines several common timer routines, abstracting from the
- *      hardware of the given target.
+ *      This module encapsulates the network task.
  *
  * DEPENDENCIES:
- *      lib_includes.h
+ *      ---
  *
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*
  * (C) Andrew Bright 2023, github.com/e5h
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
-#ifndef WC_LIB_TIMER_H
+#ifndef WC_TASK_NETWORK_H
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ Include Files ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
@@ -33,11 +30,6 @@
 /*][ GLOBAL : Exportable Function Prototypes ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
-extern void     TIMER_TickMsUpdate();
-extern UINT64   TIMER_GetTickMs();
-extern UINT64   TIMER_TimerStartMs( UINT64 duration_ms_u64 );
-extern BOOL     TIMER_TimerHasExpiredMs( UINT64 timestamp_ms_u64 );
-
 /* End */
-#define WC_LIB_TIMER_H
+#define WC_TASK_NETWORK_H
 #endif

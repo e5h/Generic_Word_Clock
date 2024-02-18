@@ -14,16 +14,10 @@
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-/*][ Feature Switches ][~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-/*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-
-#define USES_EXTERNAL_TICK
-
-/*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ Include Files ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
-#include "lib_timer.h"
+#include "lib_includes.h"
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ LOCAL : Constants and Types ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
@@ -33,7 +27,7 @@
 /*][ LOCAL : Variables ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
-volatile UINT64 TIMER_tickms = 0;
+static volatile UINT64 tick_ms_u64 = 0;
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ LOCAL : Function Prototypes ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
@@ -44,21 +38,21 @@ volatile UINT64 TIMER_tickms = 0;
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
- * NAME IN ENGLISH:
- *      "Update the TIMER_tickms variable"
- *
  * DESCRIPTION:
- *      Adds one millisecond to the TIMER_tickms variable.
- *
- * INPUTS:
- *      none
- *
- * OUTPUTS:
- *      none
+ *      Adds one millisecond to the tick_ms_u64 variable.
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-extern void TIMER_tickMsUpdate()
+extern void TIMER_TickMsUpdate()
 {
-    TIMER_tickms++;
+    tick_ms_u64++;
+}
+
+/*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
+ * DESCRIPTION:
+ *      Returns the static timer tick variable.
+ *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
+extern UINT64 TIMER_GetTickMs()
+{
+    return tick_ms_u64;
 }
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
@@ -76,17 +70,13 @@ extern void TIMER_tickMsUpdate()
  * OUTPUTS:
  *      (UINT64) current timestamp + duration in milliseconds
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-extern UINT64 TIMER_timerStartMs( UINT64 duration_ms_U64 )
+extern UINT64 TIMER_TimerStartMs( UINT64 duration_ms_u64 )
 {
-    UINT64 current_ms_U64;
+    UINT64 current_ms_u64;
 
-#ifdef USES_EXTERNAL_TICK
-    current_ms_U64 = TIMER_tickms;
-#else
-    current_ms_U64 = ( ( xTaskGetTickCount() * 1000 ) / configTICK_RATE_HZ );
-#endif
+    current_ms_u64 = tick_ms_u64;
 
-    return ( current_ms_U64 + duration_ms_U64 );
+    return ( current_ms_u64 + duration_ms_u64 );
 }
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
@@ -103,17 +93,13 @@ extern UINT64 TIMER_timerStartMs( UINT64 duration_ms_U64 )
  * OUTPUTS:
  *      (BOOL) whether the timer has expired or not
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-extern BOOL TIMER_timerExpiredMs( UINT64 timestamp_ms_U64 )
+extern BOOL TIMER_TimerHasExpiredMs( UINT64 timestamp_ms_u64 )
 {
-    UINT64 current_ms_U64;
+    UINT64 current_ms_u64;
 
-#ifdef USES_EXTERNAL_TICK
-    current_ms_U64 = TIMER_tickms;
-#else
-    current_ms_U64 = ( ( xTaskGetTickCount() * 1000 ) / configTICK_RATE_HZ );
-#endif
+    current_ms_u64 = tick_ms_u64;
 
-    if( ( current_ms_U64 < timestamp_ms_U64 ) )
+    if( ( current_ms_u64 < timestamp_ms_u64 ) )
     {
         return FALSE;
     }
