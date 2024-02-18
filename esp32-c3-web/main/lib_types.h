@@ -67,12 +67,14 @@ typedef double      FLOAT64;    /* ( _f64 ) */
 
 typedef enum{
     /* Failure codes */
+    STATUS_ERR_PARAM    = -4,   // Error with passed parameters
+    STATUS_NULL_PTR     = -3,   // Null pointer error
+    STATUS_QUEUE_ERROR  = -2,   // Error writing to queue
     STATUS_NO_CHANGE    = -1,   // No changes
     STATUS_ERR          = 0,    // Boolean compatible false
 
     /* Success codes */
-    STATUS_OK           = 1,    // Boolean compatible true
-    STATUS_NEW_EVENT    = 2,    // New event of some sort
+    STATUS_OK           = 1,    /* Boolean compatible true */
 
 } STATUS_E;
 
