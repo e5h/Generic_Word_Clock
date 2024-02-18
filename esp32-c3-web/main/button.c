@@ -11,6 +11,7 @@
  *      library.
  *
  * DEPENDENCIES:
+ *      button.h
  *      lib_messaging.h
  *
  *==============================================================================
@@ -508,7 +509,7 @@ INT32 BUTTON_event_to_string( BUTTON_EVENT_T* p_button_event_s, CHAR* p_string_c
             break;
         }
 
-        case( BTN_HOLD_RELEASE ):
+        case( BTN_HOLD_RELEASED ):
         {
             snprintf( p_event_string_c, 20 - 1, "was held." );
             break;
