@@ -387,25 +387,26 @@ STATUS_E BUTTON_update_state_machine()
  **===< global >===============================================================*/
 STATUS_E BUTTON_send_events_to_queue()
 {
-    STATUS_E send_status_e = STATUS_OK;
+    STATUS_E            send_status_e = STATUS_OK;
+    MESSAGE_CONTENT_T   msg_s;
 
-    // TODO: Message data
+    msg_s.topic_e = MSG_BUTTONS;
 
     for( INT32 button_i32 = 0; button_i32 < NUM_BUTTONS; button_i32++ )
     {
-        // TODO: Populate message data struct
+        msg_s.btn_event_s = p_button_statuses_s[ button_i32 ].event_s;
 
-        // TODO: Check if != BTN_NO_EVENT
-        if( 0 )
+        /* If there is a button event */
+        if( msg_s.btn_event_s.event_e != BTN_NO_EVENT )
         {
-            // TODO: Conditional check for message broadcast success
-            if( 0 )
+            /* Check for message broadcast success */
+            if( MESSAGING_publish_to_topic( MSG_BUTTONS, &msg_s ) >= STATUS_OK )
             {
-                // TODO: Success status
+                send_status_e = STATUS_OK;
             }
             else
             {
-                // TODO: Fail status
+                send_status_e = STATUS_ERR;
             }
 
             p_button_statuses_s[ button_i32 ].event_s.event_e = BTN_NO_EVENT;

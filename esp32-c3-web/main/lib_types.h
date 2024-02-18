@@ -75,6 +75,7 @@ typedef enum{
 
     /* Success codes */
     STATUS_OK           = 1,    /* Boolean compatible true */
+    STATUS_NEW_EVENT    = 2,    /* New event */
 
 } STATUS_E;
 
