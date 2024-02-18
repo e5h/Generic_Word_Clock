@@ -62,3 +62,25 @@
 /* End */
 #define WC_LIB_INCLUDES_H
 #endif
+
+/* Function templates */
+
+/**===< local >================================================================
+ * NAME:
+ * 
+ * SUMMARY:
+ * 
+ * INPUT REQUIREMENTS:
+ * 
+ * OUTPUT GUARANTEES:
+ **===< local >================================================================*/
+
+/**===< global >===============================================================
+ * NAME:
+ * 
+ * SUMMARY:
+ * 
+ * INPUT REQUIREMENTS:
+ * 
+ * OUTPUT GUARANTEES:
+ **===< global >===============================================================*/

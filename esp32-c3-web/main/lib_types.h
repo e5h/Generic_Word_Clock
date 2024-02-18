@@ -74,8 +74,8 @@ typedef enum{
     STATUS_ERR          = 0,    // Boolean compatible false
 
     /* Success codes */
-    STATUS_OK           = 1,    // Boolean compatible true
-    STATUS_NEW_EVENT    = 2,    // New event of some sort
+    STATUS_OK           = 1,    /* Boolean compatible true */
+    STATUS_NEW_EVENT    = 2,    /* New event */
 
 } STATUS_E;
 
