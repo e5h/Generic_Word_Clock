@@ -297,6 +297,7 @@
 #define CTRL_REG_OFFSET_M               (0xFFu) // Mask - offset value [b7:0]
 
 /* Control registers */
+/* ===========================================*/
 #define CTRL_REG_ADDR_OSCILLATOR        (0x25u)
 
 #define CTRL_REG_OSC_M_CL               (0x03u) // Mask - quartz oscillator capacitance [b1:0]
@@ -317,37 +318,135 @@
 #define CTRL_REG_OSC_M_OFFM             (0x40u) // Mask - offset mode [b6] (0 - every 4 hr, 1 - every 8 min)
 #define CTRL_REG_OSC_M_CLKIV            (0x80u) // Mask - clock inversion [b7] (0 - non inverted, 1 - inverted)
 
+/* ===========================================*/
 #define CTRL_REG_ADDR_BATTERY_SWITCH    (0x26u)
-// TODO
 
+#define CTRL_REG_BATT_M_BSM             (0x06u) // Mask - battery switch mode [b2:1]
+#define BATT_BSM_SHIFT                  (1)     // Shift - battery switch mode
+#define BATT_BSM_SW_VTH                 (0b00 << BATT_BSM_SHIFT) // Use Vdd when > Vth, Vbat otherwise
+#define BATT_BSM_SW_VBAT                (0b01 << BATT_BSM_SHIFT) // Use Vdd when > Vbat, Vbat otherwise
+#define BATT_BSM_SW_HI_EITHER           (0b10 << BATT_BSM_SHIFT) // Use Vdd when > max(Vth, Vbat), Vbat otherwise
+#define BATT_BSM_SW_LO_EITHER           (0b11 << BATT_BSM_SHIFT) // Use Vdd when > min(Vth, Vbat), Vbat otherwise
+
+#define CTRL_REG_BATT_M_BSTH            (0x01u) // Mask - threshold voltage control [b0] (0 - Vth=1.5v, 1 - Vth=2.8v)
+#define CTRL_REG_BATT_M_BSRR            (0x08u) // Mask - battery switch internal refresh rate [b3] (0 - low, 1 - high)
+#define CTRL_REG_BATT_H_BSOFF           (0x10u) // Mask - battery switch on/off [b4] (0 - enable, 1 - disable)
+
+/* ===========================================*/
 #define CTRL_REG_ADDR_PIN_IO            (0x27u)
-// TODO
 
+#define CTRL_REG_PIN_IO_M_INTAPM        (0x03u) // Mask - ~INTA pin mode control [b1:0]
+#define PIN_IO_INTAPM_SHIFT             (0)     // Shift - ~INTA pin mode control
+#define PIN_IO_INTAPM_CLK_OUT           (0b00 << PIN_IO_INTAPM_SHIFT) // CLK output mode
+#define PIN_IO_INTAPM_BATT_IND          (0b01 << PIN_IO_INTAPM_SHIFT) // Battery mode indication
+#define PIN_IO_INTAPM_N_INTA_OUT        (0b10 << PIN_IO_INTAPM_SHIFT) // ~INTA output
+#define PIN_IO_INTAPM_HIZ               (0b11 << PIN_IO_INTAPM_SHIFT) // Hi-Z
+
+#define CTRL_REG_PIN_IO_M_TSPM          (0x0Cu) // Mask - TS pin IO control [b3:2]
+#define PIN_IO_TSPM_SHIFT               (2)     // Shift - TS pin IO control
+#define PIN_IO_TSPM_DISABLED            (0b00 << PIN_IO_TSPM_SHIFT) // Disabled, can leave floating
+#define PIN_IO_TSPM_N_INTB_PP           (0b01 << PIN_IO_TSPM_SHIFT) // ~INTB output, push-pull (only on Vdd, Vbat = HiZ)
+#define PIN_IO_TSPM_CLK_PP              (0b10 << PIN_IO_TSPM_SHIFT) // CLK output, push-pull (only on Vdd, Vbat = HiZ)
+#define PIN_IO_TSPM_INPUT               (0b11 << PIN_IO_TSPM_SHIFT) // Input mode
+
+#define CTRL_REG_PIN_IO_M_TSIM          (0x10u) // Mask - TS pin input type [b4] (0 - CMOS [refs Vdd, disabled on Vbat], 1 - mechanical [active pullup sampled 16Hz, operates on both])
+#define CTRL_REG_PIN_IO_M_TSL           (0x20u) // Mask - TS pin level sense [b5] (0 - active HI, 1 - active LO)
+#define CTRL_REG_PIN_IO_M_TSPULL        (0x40u) // Mask - TS pin pull-up R value [b6] (0 - 80kR, 1 - 40kR)
+#define CTRL_REG_PIN_IO_M_CLKPM         (0x80u) // Mask - clock pin mode control [b7] (0 - enable, 1 - disable)
+
+/* ===========================================*/
 #define CTRL_REG_ADDR_FUNCTION          (0x28u)
-// TODO
 
+#define CTRL_REG_FUNC_M_COF             (0x07u) // Mask - clock output frequency [b2:0]
+#define FUNC_COF_SHIFT                  (0)     // Shift - clock output frequency
+#define FUNC_COF_32KHZ                  (0b000 << FUNC_COF_SHIFT) // CLK, TS, ~INTA = 32,768 Hz
+#define FUNC_COF_16KHZ                  (0b001 << FUNC_COF_SHIFT) // CLK, TS, ~INTA = 16,384 Hz
+#define FUNC_COF_8KHZ                   (0b010 << FUNC_COF_SHIFT) // CLK, TS, ~INTA = 8,192 Hz
+#define FUNC_COF_4KHZ                   (0b011 << FUNC_COF_SHIFT) // CLK, TS, ~INTA = 4,096 Hz
+#define FUNC_COF_2KHZ                   (0b100 << FUNC_COF_SHIFT) // CLK, TS, ~INTA = 2,048 Hz
+#define FUNC_COF_1KHZ                   (0b101 << FUNC_COF_SHIFT) // CLK, TS, ~INTA = 1,024 Hz
+#define FUNC_COF_1HZ                    (0b110 << FUNC_COF_SHIFT) // CLK, TS, ~INTA = 1 Hz
+#define FUNC_COF_DISABLE                (0b111 << FUNC_COF_SHIFT) // CLK, TS = LOW, ~INTA = Hi-Z
+
+#define CTRL_REG_FUNC_M_STOPM           (0x80u) // Mask - RTC STOP mode control [b3] (0 - STOP bit only, 1 - STOP bit or TS pin)
+#define CTRL_REG_FUNC_M_RTCM            (0x10u) // Mask - RTC mode [b4] (0 - real time mode, 1 - stopwatch mode)
+
+#define CTRL_REG_FUNC_M_PI              (0x60u) // Mask - periodic interrupt [b6:5]
+#define FUNC_PI_SHIFT                   (5)     // Shift - periodic interrupt
+#define FUNC_PI_NONE                    (0b00 << FUNC_PI_SHIFT) // No periodic interrupt
+#define FUNC_PI_SECOND                  (0b01 << FUNC_PI_SHIFT) // Onc interrupt pulse per second
+#define FUNC_PI_MINUTE                  (0b10 << FUNC_PI_SHIFT) // One interrupt pulse per minute
+#define FUNC_PI_HOUR                    (0b11 << FUNC_PI_SHIFT) // One interrupt pulse per hour
+
+#define CTRL_REG_FUNC_M_1OOTH           (0x80u) // Mask - 100th seconds mode [b7] (0 - disabled, 1 - enabled)
+
+/* ===========================================*/
 #define CTRL_REG_ADDR_INTA_ENABLE       (0x29u)
-// TODO
 
+#define CTRL_REG_INTA_ENABLE_M_WDIEA    (0x01u) // Mask - watchdog interrupt enable [b0] (0 - disabled, 1 - enabled)
+#define CTRL_REG_INTA_ENABLE_M_BSIEA    (0x02u) // Mask - battery switch interrupt enable [b1] (0 - disabled, 1 - enabled)
+#define CTRL_REG_INTA_ENABLE_M_TSRIEA   (0x04u) // Mask - timestamp register interrupt enable [b2] (0 - disabled, 1 - enabled)
+#define CTRL_REG_INTA_ENABLE_M_A2IEA    (0x08u) // Mask - alarm2 interrupt enable [b3] (0 - disabled, 1 - enabled)
+#define CTRL_REG_INTA_ENABLE_M_A1IEA    (0x10u) // Mask - alarm1 interrupt enable [b4] (0 - disabled, 1 - enabled)
+#define CTRL_REG_INTA_ENABLE_M_OIEA     (0x20u) // Mask - offset correction interrupt enable [b5] (0 - disabled, 1 - enabled)
+#define CTRL_REG_INTA_ENABLE_M_PIEA     (0x40u) // Mask - periodic interrupt enable [b6] (0 - disabled, 1 - enabled)
+#define CTRL_REG_INTA_ENABLE_M_ILPA     (0x80u) // Mask - level or pulse mode [b7] (0 - pulse, 1 - follow flags [permanent level])
+
+/* ===========================================*/
 #define CTRL_REG_ADDR_INTB_ENABLE       (0x2Au)
-// TODO
 
+#define CTRL_REG_INTA_ENABLE_M_WDIEB    (0x01u) // Mask - watchdog interrupt enable [b0] (0 - disabled, 1 - enabled)
+#define CTRL_REG_INTA_ENABLE_M_BSIEB    (0x02u) // Mask - battery switch interrupt enable [b1] (0 - disabled, 1 - enabled)
+#define CTRL_REG_INTA_ENABLE_M_TSRIEB   (0x04u) // Mask - timestamp register interrupt enable [b2] (0 - disabled, 1 - enabled)
+#define CTRL_REG_INTA_ENABLE_M_A2IEB    (0x08u) // Mask - alarm2 interrupt enable [b3] (0 - disabled, 1 - enabled)
+#define CTRL_REG_INTA_ENABLE_M_A1IEB    (0x10u) // Mask - alarm1 interrupt enable [b4] (0 - disabled, 1 - enabled)
+#define CTRL_REG_INTA_ENABLE_M_OIEB     (0x20u) // Mask - offset correction interrupt enable [b5] (0 - disabled, 1 - enabled)
+#define CTRL_REG_INTA_ENABLE_M_PIEB     (0x40u) // Mask - periodic interrupt enable [b6] (0 - disabled, 1 - enabled)
+#define CTRL_REG_INTA_ENABLE_M_ILPB     (0x80u) // Mask - level or pulse mode [b7] (0 - pulse, 1 - follow flags [permanent level])
+
+/* ===========================================*/
 #define CTRL_REG_ADDR_FLAGS             (0x2Bu)
-// TODO
 
-/* RAM byte */
-#define CTRL_REG_ADDR_RAM_BYTE          (0x2Cu)
+#define CTRL_REG_FLAGS_M_TSR1F          (0x01u) // Mask - timestamp register 1 event flag [b0] (0 - [R: flag is inactive, W: clear flag], 1 - [R: flag is active, W: no change])
+#define CTRL_REG_FLAGS_M_TSR2F          (0x02u) // Mask - timestamp register 2 event flag [b1] (0 - [R: flag is inactive, W: clear flag], 1 - [R: flag is active, W: no change])
+#define CTRL_REG_FLAGS_M_TSR3F          (0x04u) // Mask - timestamp register 3 event flag [b2] (0 - [R: flag is inactive, W: clear flag], 1 - [R: flag is active, W: no change])
+#define CTRL_REG_FLAGS_M_BSF            (0x08u) // Mask - battery switch flag [b3] (0 - [R: flag is inactive, W: clear flag], 1 - [R: flag is active, W: no change])
+#define CTRL_REG_FLAGS_M_WDF            (0x10u) // Mask - watchdog flag [b4] (0 - [R: flag is inactive, W: clear flag], 1 - [R: flag is active, W: no change])
+#define CTRL_REG_FLAGS_M_A1F            (0x20u) // Mask - alarm1 flag [b5] (0 - [R: flag is inactive, W: clear flag], 1 - [R: flag is active, W: no change])
+#define CTRL_REG_FLAGS_M_A2F            (0x40u) // Mask - alarm2 flag [b6] (0 - [R: flag is inactive, W: clear flag], 1 - [R: flag is active, W: no change])
+#define CTRL_REG_FLAGS_M_PIF            (0x80u) // Mask - periodic interrupt flag [b7] (0 - [R: flag is inactive, W: clear flag], 1 - [R: flag is active, W: no change])
 
-/* WDT registers */
+/* ===========================================*/
+#define CTRL_REG_ADDR_RAM_BYTE          (0x2Cu) // Any purpose, 8-bit storage for user application
+
+/* ===========================================*/
 #define CTRL_REG_ADDR_WATCHDOG          (0x2Du)
-// TODO
 
-/* Stop */
+#define CTRL_REG_WDG_M_WDS              (0x03u) // Mask - watchdog step size [b1:0]
+#define WDG_WDS_SHIFT                   (0)     // Shift - watchdog step size
+#define WDG_WDS_4_SEC                   (0b00 << WDG_WDS_SHIFT) // 4 second step size (0.25Hz source)
+#define WDG_WDS_1_SEC                   (0b01 << WDG_WDS_SHIFT) // 1 second step size (1Hz source)
+#define WDG_WDS_1_4_SEC                 (0b10 << WDG_WDS_SHIFT) // 1/4 second step size (4Hz source)
+#define WDG_WDS_1_16_SEC                (0b11 << WDG_WDS_SHIFT) // 1/16 second step size (16Hz source)
+
+#define CTRL_REG_WDG_M_WDR              (0x7Cu) // Mask - watchdog register bits [b6:2] (R: current counter value, W: watchdog counter load value)
+#define CTRL_REG_WDG_M_WDM              (0x80u) // Mask - watchdog mode [b7] (0 - single shot, 1 - repeat mode)
+
+/* ===========================================*/
 #define CTRL_REG_ADDR_STOP_ENABLE       (0x2Eu)
 
-/* Reset */
+#define CTRL_REG_STOP_ENABLE_M_STOP     (0x01u) // Mask - STOP bit [b0] (0 - RTC runs, 1 - RTC is stopped)
+#define CTRL_REG_STOP_ENABLE_M_UNUSED   (0xF7u) // Unused
+
+/* ===========================================*/
 #define CTRL_REG_ADDR_RESETS            (0x2Fu)
-// TODO
+
+#define CTRL_REG_RESET_BASE             (0x24u) // Base value - AND bits for different reset functions
+#define REG_RESET_BIT_SR                (0x04u) // Software reset, also triggers CTS and CPR
+#define REG_RESET_BIT_CPR               (0x80u) // Clear prescaler, can be combined with CTS
+#define REG_RESET_BIT_CTS               (0x01u) // Clear timestamp, can be combined with CPR
+
+/* ===========================================*/
 
 /*=============================================================================*/
 /*][ GLOBAL : Exportable Variables ][==========================================*/
