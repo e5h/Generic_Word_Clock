@@ -6,6 +6,9 @@
  * PURPOSE:
  *      This module encapsulates the real time clock.
  *
+ *      The real time clock used in this module is a PCF85263A manufactured
+ *      by NXP.
+ *
  * DEPENDENCIES:
  *      ---
  *
@@ -19,6 +22,8 @@
 /*=============================================================================*/
 /*][ Include Files ][==========================================================*/
 /*=============================================================================*/
+
+#include "lib_includes.h"
 
 /*=============================================================================*/
 /*][ GLOBAL : Constants and Types ][===========================================*/
@@ -297,7 +302,7 @@
 #define CTRL_REG_OFFSET_M               (0xFFu) // Mask - offset value [b7:0]
 
 /* Control registers */
-/* ===========================================*/
+/*===========================================*/
 #define CTRL_REG_ADDR_OSCILLATOR        (0x25u)
 
 #define CTRL_REG_OSC_M_CL               (0x03u) // Mask - quartz oscillator capacitance [b1:0]
@@ -318,7 +323,7 @@
 #define CTRL_REG_OSC_M_OFFM             (0x40u) // Mask - offset mode [b6] (0 - every 4 hr, 1 - every 8 min)
 #define CTRL_REG_OSC_M_CLKIV            (0x80u) // Mask - clock inversion [b7] (0 - non inverted, 1 - inverted)
 
-/* ===========================================*/
+/*===[control registers]=====================*/
 #define CTRL_REG_ADDR_BATTERY_SWITCH    (0x26u)
 
 #define CTRL_REG_BATT_M_BSM             (0x06u) // Mask - battery switch mode [b2:1]
@@ -332,7 +337,7 @@
 #define CTRL_REG_BATT_M_BSRR            (0x08u) // Mask - battery switch internal refresh rate [b3] (0 - low, 1 - high)
 #define CTRL_REG_BATT_H_BSOFF           (0x10u) // Mask - battery switch on/off [b4] (0 - enable, 1 - disable)
 
-/* ===========================================*/
+/*===[control registers]=====================*/
 #define CTRL_REG_ADDR_PIN_IO            (0x27u)
 
 #define CTRL_REG_PIN_IO_M_INTAPM        (0x03u) // Mask - ~INTA pin mode control [b1:0]
@@ -354,7 +359,7 @@
 #define CTRL_REG_PIN_IO_M_TSPULL        (0x40u) // Mask - TS pin pull-up R value [b6] (0 - 80kR, 1 - 40kR)
 #define CTRL_REG_PIN_IO_M_CLKPM         (0x80u) // Mask - clock pin mode control [b7] (0 - enable, 1 - disable)
 
-/* ===========================================*/
+/*===[control registers]=====================*/
 #define CTRL_REG_ADDR_FUNCTION          (0x28u)
 
 #define CTRL_REG_FUNC_M_COF             (0x07u) // Mask - clock output frequency [b2:0]
@@ -380,7 +385,7 @@
 
 #define CTRL_REG_FUNC_M_1OOTH           (0x80u) // Mask - 100th seconds mode [b7] (0 - disabled, 1 - enabled)
 
-/* ===========================================*/
+/*===[control registers]=====================*/
 #define CTRL_REG_ADDR_INTA_ENABLE       (0x29u)
 
 #define CTRL_REG_INTA_ENABLE_M_WDIEA    (0x01u) // Mask - watchdog interrupt enable [b0] (0 - disabled, 1 - enabled)
@@ -392,7 +397,7 @@
 #define CTRL_REG_INTA_ENABLE_M_PIEA     (0x40u) // Mask - periodic interrupt enable [b6] (0 - disabled, 1 - enabled)
 #define CTRL_REG_INTA_ENABLE_M_ILPA     (0x80u) // Mask - level or pulse mode [b7] (0 - pulse, 1 - follow flags [permanent level])
 
-/* ===========================================*/
+/*===[control registers]=====================*/
 #define CTRL_REG_ADDR_INTB_ENABLE       (0x2Au)
 
 #define CTRL_REG_INTA_ENABLE_M_WDIEB    (0x01u) // Mask - watchdog interrupt enable [b0] (0 - disabled, 1 - enabled)
@@ -404,7 +409,7 @@
 #define CTRL_REG_INTA_ENABLE_M_PIEB     (0x40u) // Mask - periodic interrupt enable [b6] (0 - disabled, 1 - enabled)
 #define CTRL_REG_INTA_ENABLE_M_ILPB     (0x80u) // Mask - level or pulse mode [b7] (0 - pulse, 1 - follow flags [permanent level])
 
-/* ===========================================*/
+/*===[control registers]=====================*/
 #define CTRL_REG_ADDR_FLAGS             (0x2Bu)
 
 #define CTRL_REG_FLAGS_M_TSR1F          (0x01u) // Mask - timestamp register 1 event flag [b0] (0 - [R: flag is inactive, W: clear flag], 1 - [R: flag is active, W: no change])
@@ -416,10 +421,10 @@
 #define CTRL_REG_FLAGS_M_A2F            (0x40u) // Mask - alarm2 flag [b6] (0 - [R: flag is inactive, W: clear flag], 1 - [R: flag is active, W: no change])
 #define CTRL_REG_FLAGS_M_PIF            (0x80u) // Mask - periodic interrupt flag [b7] (0 - [R: flag is inactive, W: clear flag], 1 - [R: flag is active, W: no change])
 
-/* ===========================================*/
+/*===[control registers]=====================*/
 #define CTRL_REG_ADDR_RAM_BYTE          (0x2Cu) // Any purpose, 8-bit storage for user application
 
-/* ===========================================*/
+/*===[control registers]=====================*/
 #define CTRL_REG_ADDR_WATCHDOG          (0x2Du)
 
 #define CTRL_REG_WDG_M_WDS              (0x03u) // Mask - watchdog step size [b1:0]
@@ -432,13 +437,13 @@
 #define CTRL_REG_WDG_M_WDR              (0x7Cu) // Mask - watchdog register bits [b6:2] (R: current counter value, W: watchdog counter load value)
 #define CTRL_REG_WDG_M_WDM              (0x80u) // Mask - watchdog mode [b7] (0 - single shot, 1 - repeat mode)
 
-/* ===========================================*/
+/*===[control registers]=====================*/
 #define CTRL_REG_ADDR_STOP_ENABLE       (0x2Eu)
 
 #define CTRL_REG_STOP_ENABLE_M_STOP     (0x01u) // Mask - STOP bit [b0] (0 - RTC runs, 1 - RTC is stopped)
 #define CTRL_REG_STOP_ENABLE_M_UNUSED   (0xF7u) // Unused
 
-/* ===========================================*/
+/*===[control registers]=====================*/
 #define CTRL_REG_ADDR_RESETS            (0x2Fu)
 
 #define CTRL_REG_RESET_BASE             (0x24u) // Base value - AND bits for different reset functions
@@ -455,6 +460,10 @@
 /*=============================================================================*/
 /*][ GLOBAL : Exportable Function Prototypes ][================================*/
 /*=============================================================================*/
+
+extern STATUS_E     RTC_init(UINT8 rtc_addr_u8);
+extern STATUS_E     RTC_get_time(struct tm* p_timestamp_s);
+extern STATUS_E     RTC_set_time(struct tm* p_timestamp_s);
 
 /* End */
 #define WC_RTC_H

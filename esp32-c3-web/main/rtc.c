@@ -6,6 +6,9 @@
  * PURPOSE:
  *      This module encapsulates the real time clock.
  *
+ *      The real time clock used in this module is a PCF85263A manufactured
+ *      by NXP.
+ *
  * DEPENDENCIES:
  *      rtc.h
  *
@@ -37,5 +40,60 @@
 /*=============================================================================*/
 /*][ LOCAL : Function Definitions ][===========================================*/
 /*=============================================================================*/
+
+/**===< local >================================================================
+ * NAME:
+ *
+ * SUMMARY:
+ *
+ * INPUT REQUIREMENTS:
+ *
+ * OUTPUT GUARANTEES:
+ **===< local >================================================================*/
+// TODO: Managed i2c write
+
+/**===< local >================================================================
+ * NAME:
+ *
+ * SUMMARY:
+ *
+ * INPUT REQUIREMENTS:
+ *
+ * OUTPUT GUARANTEES:
+ **===< local >================================================================*/
+// TODO: Managed i2c read
+
+/**===< global >===============================================================
+ * NAME: RTC_init() - Initialize the real time clock
+ *
+ * SUMMARY:
+ *
+ * INPUT REQUIREMENTS:
+ *
+ * OUTPUT GUARANTEES:
+ **===< global >===============================================================*/
+STATUS_E RTC_init(UINT8 rtc_addr_u8);
+
+/**===< global >===============================================================
+ * NAME: RTC_get_time() - Get the current time from the RTC
+ *
+ * SUMMARY:
+ *
+ * INPUT REQUIREMENTS:
+ *
+ * OUTPUT GUARANTEES:
+ **===< global >===============================================================*/
+STATUS_E RTC_get_time(struct tm* p_timestamp_s);
+
+/**===< global >===============================================================
+ * NAME: RTC_set_time() - Set the timestamp on the RTC
+ *
+ * SUMMARY:
+ *
+ * INPUT REQUIREMENTS:
+ *
+ * OUTPUT GUARANTEES:
+ **===< global >===============================================================*/
+STATUS_E RTC_set_time(struct tm* p_timestamp_s);
 
 /* end */
