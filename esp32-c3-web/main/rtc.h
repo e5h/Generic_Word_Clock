@@ -29,6 +29,10 @@
 /*][ GLOBAL : Constants and Types ][===========================================*/
 /*=============================================================================*/
 
+/* PCF85263A VALUES */
+#define PCF85263A_ADDR_7BIT             (0x51u) // Default address (1010_001x), MSB = b6
+#define PCF85263A_ADDR_8BIT             (0xA2u) // Default address (1010_001x), MSB = b7
+
 /* REGISTER DEFINITIONS */
 /* RTC time and date */
 #define RTC_REG_ADDR_100TH_SECONDS      (0x00u)

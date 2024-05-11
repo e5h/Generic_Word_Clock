@@ -33,9 +33,16 @@
 
 #define LOG_TAG "rtc.c"     // Tag for optional ESP_LOGx calls
 
+typedef struct{
+    UINT8 address_u8;
+} RTC_T;
+
 /*=============================================================================*/
 /*][ LOCAL : Variables ][======================================================*/
 /*=============================================================================*/
+
+volatile bool rtc_initialized_b = FALSE;
+static RTC_T rtc_s;
 
 /*=============================================================================*/
 /*][ LOCAL : Function Definitions ][===========================================*/
@@ -50,7 +57,14 @@
  *
  * OUTPUT GUARANTEES:
  **===< local >================================================================*/
-// TODO: Managed i2c write
+static STATUS_E i2c_write(UINT8 dev_addr_u8, UINT8 reg_addr_u8, UINT8* buf_u8, INT32 len_i32)
+{
+    STATUS_E status_e = STATUS_OK;
+    // TODO: Managed i2c write
+
+    return status_e;
+}
+
 
 /**===< local >================================================================
  * NAME:
@@ -61,7 +75,13 @@
  *
  * OUTPUT GUARANTEES:
  **===< local >================================================================*/
-// TODO: Managed i2c read
+static STATUS_E i2c_read(UINT8 dev_addr_u8, UINT8 reg_addr_u8, UINT8* buf_u8, INT32 len_i32)
+{
+    STATUS_E status_e = STATUS_OK;
+    // TODO: Managed i2c read
+
+    return status_e;
+}
 
 /**===< global >===============================================================
  * NAME: RTC_init() - Initialize the real time clock
@@ -72,7 +92,12 @@
  *
  * OUTPUT GUARANTEES:
  **===< global >===============================================================*/
-STATUS_E RTC_init(UINT8 rtc_addr_u8);
+STATUS_E RTC_init(UINT8 rtc_addr_u8)
+{
+    STATUS_E status_e = STATUS_OK;
+
+    return status_e;
+}
 
 /**===< global >===============================================================
  * NAME: RTC_get_time() - Get the current time from the RTC
@@ -83,7 +108,31 @@ STATUS_E RTC_init(UINT8 rtc_addr_u8);
  *
  * OUTPUT GUARANTEES:
  **===< global >===============================================================*/
-STATUS_E RTC_get_time(struct tm* p_timestamp_s);
+STATUS_E RTC_get_time(struct tm* p_timestamp_s)
+{
+    STATUS_E status_e = STATUS_OK;
+
+    // TODO: sequential read from RTC into a buffer
+    // start
+    // i2c address + write bit
+    // register address (seconds)
+    // stop
+
+    // start
+    // i2c address + read bit
+    // read: seconds data
+    // read: minutes data
+    // read: hours data
+    // read: days data
+    // read: weekdays data
+    // read: months data
+    // read: years data
+    // stop
+
+    // TODO: convert the BCD values to decimal
+
+    return status_e;
+}
 
 /**===< global >===============================================================
  * NAME: RTC_set_time() - Set the timestamp on the RTC
@@ -94,6 +143,27 @@ STATUS_E RTC_get_time(struct tm* p_timestamp_s);
  *
  * OUTPUT GUARANTEES:
  **===< global >===============================================================*/
-STATUS_E RTC_set_time(struct tm* p_timestamp_s);
+STATUS_E RTC_set_time(struct tm* p_timestamp_s)
+{
+    STATUS_E status_e = STATUS_OK;
+
+    // TODO: convert the timestamp struct to BCD values
+
+    // TODO: sequential write to RTC
+    // start
+    // i2c address + write bit
+    // register address (seconds)
+    // write: seconds data
+    // write: minutes data
+    // write: hours data
+    // write: days data
+    // write: weekdays data
+    // write: months data
+    // write: years data
+    // stop
+
+
+    return status_e;
+}
 
 /* end */
