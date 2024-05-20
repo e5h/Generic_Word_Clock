@@ -146,6 +146,9 @@ STATUS_E RTC_get_time(struct tm* p_timestamp_s)
 STATUS_E RTC_set_time(struct tm* p_timestamp_s)
 {
     STATUS_E status_e = STATUS_OK;
+    UINT8 buffer[8];
+
+    memset(buffer, 0, sizeof(buffer));
 
     // TODO: convert the timestamp struct to BCD values
 
