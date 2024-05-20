@@ -1687,6 +1687,27 @@ CONFIG_WIFI_PROV_BLE_FORCE_ENCRYPTION=y
 CONFIG_WIFI_PROV_STA_ALL_CHANNEL_SCAN=y
 # CONFIG_WIFI_PROV_STA_FAST_SCAN is not set
 # end of Wi-Fi Provisioning Manager
+
+CONFIG_HAVE_I2C_MANAGER=y
+
+#
+# I2C Port Settings
+#
+
+#
+# I2C Port 0
+#
+# CONFIG_I2C_MANAGER_0_ENABLED is not set
+# end of I2C Port 0
+
+#
+# I2C Port 1
+#
+# CONFIG_I2C_MANAGER_1_ENABLED is not set
+# end of I2C Port 1
+
+# CONFIG_I2C_MANAGER_I2CDEV is not set
+# end of I2C Port Settings
 # end of Component config
 
 # CONFIG_IDF_EXPERIMENTAL_FEATURES is not set
