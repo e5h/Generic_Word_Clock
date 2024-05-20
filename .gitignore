@@ -1,3 +1,5 @@
 **/.devcontainer/
 **/.vscode/
 **/build/
+/esp32-c3-web/cmake-build-debug*/
+**/.idea/
