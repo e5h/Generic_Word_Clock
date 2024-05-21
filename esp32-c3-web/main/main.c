@@ -27,6 +27,7 @@
 // task network
 
 #include "esp_timer.h"
+#include "nvs_flash.h"
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ LOCAL : Constants and Types ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
@@ -71,6 +72,9 @@ TaskHandle_t h_task_rgbleds;
 /* Order and request queues */
 QueueHandle_t q_order_rgbleds_task;
 
+// Clock configuration
+static CLOCK_CONFIG clock_config_s;
+
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ LOCAL : Function Prototypes ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
@@ -78,6 +82,79 @@ QueueHandle_t q_order_rgbleds_task;
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ Function Definitions ][~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
+
+/**===< local >================================================================
+ * NAME:
+ *      rtc_save_time() - saves the current time
+ *
+ * SUMMARY:
+ *      Takes the last stored time inside the local clock config struct, and
+ *      writes it to non-volatile storage.
+ *
+ * INPUT REQUIREMENTS:
+ *      ---
+ *
+ * OUTPUT GUARANTEES:
+ *      Returns an enum status (fail <= 0, success > 0)
+ **===< local >================================================================*/
+static STATUS_E rtc_save_time( CLOCK_CONFIG* new_config_s )
+{
+    nvs_handle_t nvs_handle;
+    size_t config_size = sizeof( CLOCK_CONFIG );
+
+    esp_err_t err;
+    STATUS_E status_e = STATUS_OK;
+
+    // Check for differences to reduce memory wear
+    if( memcmp( new_config_s, &clock_config_s, config_size ) == 0 )
+    {
+        return STATUS_NO_CHANGE; // No change
+    }
+
+    // TODO: Sanity check the values
+
+    err = nvs_open( "clock", NVS_READWRITE, &nvs_handle );
+    if( err != ESP_OK )
+    {
+        ESP_LOGE("rtc_save_time", "Could not open NVS! (%s)", esp_err_to_name(err));
+        return STATUS_ERR;
+    }
+
+    err = nvs_set_blob( nvs_handle, "clockconfig", new_config_s, config_size );
+    if( err != ESP_OK )
+    {
+        ESP_LOGE("rtc_save_time", "Could not write to NVS! (%s)", esp_err_to_name(err));
+        return STATUS_ERR;
+    }
+
+    err = nvs_commit( nvs_handle );
+    if( err != ESP_OK )
+    {
+        ESP_LOGE("rtc_save_time", "Could not save NVS! (%s)", esp_err_to_name(err));
+        return STATUS_ERR;
+    }
+
+    nvs_close( nvs_handle );
+    ESP_LOGW("rtc_save_time", "Saved clock config to NVS.");
+    ESP_LOGI("rtc_save_time", "Saved time: ");
+    // TODO: Convert the struct tm to a readable timestamp.
+
+    clock_config_s = *new_config_s;
+
+    return status_e;
+}
+
+/**===< local >================================================================
+ * NAME:
+ *
+ * SUMMARY:
+ *
+ * INPUT REQUIREMENTS:
+ *
+ * OUTPUT GUARANTEES:
+ **===< local >================================================================*/
+ // TODO: rtc / NVS read
+ // TODO: checks for dead battery?
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
  * Timer callback - 1 ms

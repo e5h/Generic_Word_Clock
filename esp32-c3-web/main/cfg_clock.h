@@ -2,8 +2,28 @@
 
 #ifndef AUTOGEN_CONFIG_CLOCK_H
 
-#include "task_display.h"
 #include "rgb_rmt.h"
+#include "time.h"
+
+#define MAX_WORD_LENGTH (10)
+
+typedef enum{
+    WORD_PREFIX         = 0x01,
+    WORD_CUSTOM         = 0x02,
+    WORD_HOUR           = 0x04,
+    WORD_SUFFIX         = 0x08
+} CLOCK_WORD_TYPE;
+
+typedef struct{
+    STRING              word_str;
+    UINT8               word_length_u8;
+    CLOCK_WORD_TYPE     word_type_E;
+    UINT8               word_pixels_u8[ MAX_WORD_LENGTH ];
+} CLOCK_WORD;
+
+typedef struct{
+    struct tm           last_time_s;
+} CLOCK_CONFIG;
 
 extern const CLOCK_WORD     CLOCK_words_S[];
 extern const UINT8          CLOCK_num_words_u8;
