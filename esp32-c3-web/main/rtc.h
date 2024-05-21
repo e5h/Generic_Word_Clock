@@ -313,7 +313,7 @@
 #define OSC_CL_SHIFT                    (0)     // Shift - quartz oscillator capacitance
 #define OSC_CL_7_0_PF                   (0b00 << OSC_CL_SHIFT) // 7.5 pF crystal
 #define OSC_CL_6_0_PF                   (0b01 << OSC_CL_SHIFT) // 6.0 pF crystal
-#define OSC_CL_12_5_PF                  (0b10 << OSC_CL_SHIFT) // 12.5 pF crystal
+// #define OSC_CL_12_5_PF               (0b10 << OSC_CL_SHIFT) // 12.5 pF crystal (redundant)
 #define OSC_CL_12_5_PF                  (0b11 << OSC_CL_SHIFT) // 12.5 pF crystal
 
 #define CTRL_REG_OSC_M_OSCD             (0x0Cu) // Mask - oscillator control [b3:2]
