@@ -85,11 +85,11 @@ static CLOCK_CONFIG clock_config_s;
 
 /**===< local >================================================================
  * NAME:
- *      rtc_save_time() - saves the current time
+ *      nvs_save_clock_config() - saves the current clock configuration
  *
  * SUMMARY:
- *      Takes the last stored time inside the local clock config struct, and
- *      writes it to non-volatile storage.
+ *      Takes all of the clock configuration values and saves them to non
+ *      volatile storage.
  *
  * INPUT REQUIREMENTS:
  *      ---
@@ -97,7 +97,7 @@ static CLOCK_CONFIG clock_config_s;
  * OUTPUT GUARANTEES:
  *      Returns an enum status (fail <= 0, success > 0)
  **===< local >================================================================*/
-static STATUS_E rtc_save_time( CLOCK_CONFIG* new_config_s )
+static STATUS_E nvs_save_clock_config( CLOCK_CONFIG* new_config_s )
 {
     nvs_handle_t nvs_handle;
     size_t config_size = sizeof( CLOCK_CONFIG );
@@ -116,27 +116,27 @@ static STATUS_E rtc_save_time( CLOCK_CONFIG* new_config_s )
     err = nvs_open( "clock", NVS_READWRITE, &nvs_handle );
     if( err != ESP_OK )
     {
-        ESP_LOGE("rtc_save_time", "Could not open NVS! (%s)", esp_err_to_name(err));
+        ESP_LOGE("nvs_save_clock_config", "Could not open NVS! (%s)", esp_err_to_name(err));
         return STATUS_ERR;
     }
 
     err = nvs_set_blob( nvs_handle, "clockconfig", new_config_s, config_size );
     if( err != ESP_OK )
     {
-        ESP_LOGE("rtc_save_time", "Could not write to NVS! (%s)", esp_err_to_name(err));
+        ESP_LOGE("nvs_save_clock_config", "Could not write to NVS! (%s)", esp_err_to_name(err));
         return STATUS_ERR;
     }
 
     err = nvs_commit( nvs_handle );
     if( err != ESP_OK )
     {
-        ESP_LOGE("rtc_save_time", "Could not save NVS! (%s)", esp_err_to_name(err));
+        ESP_LOGE("nvs_save_clock_config", "Could not save NVS! (%s)", esp_err_to_name(err));
         return STATUS_ERR;
     }
 
     nvs_close( nvs_handle );
-    ESP_LOGW("rtc_save_time", "Saved clock config to NVS.");
-    ESP_LOGI("rtc_save_time", "Saved time: ");
+    ESP_LOGW("nvs_save_clock_config", "Saved clock config to NVS.");
+    ESP_LOGI("nvs_save_clock_config", "Saved time: ");
     // TODO: Convert the struct tm to a readable timestamp.
 
     clock_config_s = *new_config_s;
@@ -146,21 +146,62 @@ static STATUS_E rtc_save_time( CLOCK_CONFIG* new_config_s )
 
 /**===< local >================================================================
  * NAME:
+ *      nvs_load_clock_config() - loads the current clock configuration
  *
  * SUMMARY:
+ *      Loads all of the clock configuration values from the on-board non
+ *      volatile storage.
  *
  * INPUT REQUIREMENTS:
+ *      ---
  *
  * OUTPUT GUARANTEES:
+ *      Returns an enum status (fail <= 0, success > 0)
  **===< local >================================================================*/
- // TODO: rtc / NVS read
- // TODO: checks for dead battery?
+static STATUS_E nvs_load_clock_config( CLOCK_CONFIG* new_config_s )
+{
+    nvs_handle_t nvs_handle;
+    size_t config_size = sizeof( CLOCK_CONFIG );
+
+    esp_err_t err;
+    STATUS_E status_e = STATUS_OK;
+
+    err = nvs_open( "clock", NVS_READWRITE, &nvs_handle );
+    if( err != ESP_OK )
+    {
+        ESP_LOGE("nvs_load_clock_config", "Could not open NVS! (%s)", esp_err_to_name(err));
+        return STATUS_ERR;
+    }
+
+    err = nvs_get_blob( nvs_handle, "clockconfig", new_config_s, &config_size );
+    if( err != ESP_OK )
+    {
+        ESP_LOGE("nvs_load_clock_config", "Could not read from NVS! (%s)", esp_err_to_name(err));
+        return STATUS_ERR;
+    }
+
+    err = nvs_commit( nvs_handle );
+    if( err != ESP_OK )
+    {
+        ESP_LOGE("nvs_load_clock_config", "Could not save NVS! (%s)", esp_err_to_name(err));
+        return STATUS_ERR;
+    }
+
+    nvs_close( nvs_handle );
+    ESP_LOGW("nvs_load_clock_config", "Loaded clock config from NVS.");
+    ESP_LOGI("nvs_load_clock_config", "Loaded time: ");
+    // TODO: Convert the struct tm to a readable timestamp.
+
+    clock_config_s = *new_config_s;
+
+    return status_e;
+}
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
  * Timer callback - 1 ms
  *
  * DESCRIPTION:
- *      This function is called every 1 milliseconds. The purpose is to wake
+ *      This function is called every 1 millisecond. The purpose is to wake
  *      certain tasks periodically by setting their task notification bits.
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 void timer_1ms_callback(void *param)
