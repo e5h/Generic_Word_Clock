@@ -18,32 +18,22 @@
 
 #include <stdio.h>
 #include "lib_includes.h"
+#include "lib_messaging.h"
 
 #include "rgb_rmt.h"
 #include "cfg_clock.h"
+#include "rtc.h"
 
 #include "task_display.h"
 // task device
 // task network
 
 #include "esp_timer.h"
+#include "nvs_flash.h"
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ LOCAL : Constants and Types ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-
-/* Different types of inter-thread messages */
-typedef enum{
-    MSG_DEFAULT,            /* Default (no type) */
-} MSG_TYPE;
-
-typedef struct{
-    MSG_TYPE type_E;        /* Type of message */
-    union                   /* Union for message data */
-    {
-        BOOL default_B;
-    };
-} MSG_DATA;
 
 typedef enum{
     FLAG_1_MS           = 0x01, /* Flag set on 1ms timer callback */
@@ -57,7 +47,7 @@ typedef enum{
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
 /* ESP event groups (flags) */
-EventGroupHandle_t rgbleds_flags;
+EventGroupHandle_t heartbeat_flags;
 
 /* ESP timer handles */
 esp_timer_handle_t timer_handle_1ms;
@@ -66,10 +56,13 @@ esp_timer_handle_t timer_handle_100ms;
 esp_timer_handle_t timer_handle_1sec;
 
 /* FreeRTOS task handles */
-TaskHandle_t h_task_rgbleds;
+TaskHandle_t h_task_heartbeat;
 
 /* Order and request queues */
-QueueHandle_t q_order_rgbleds_task;
+QueueHandle_t q_heartbeat_task;
+
+// Clock configuration
+static CLOCK_CONFIG clock_config_s;
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*][ LOCAL : Function Prototypes ][*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
@@ -79,17 +72,131 @@ QueueHandle_t q_order_rgbleds_task;
 /*][ Function Definitions ][~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
+/**===< local >================================================================
+ * NAME:
+ *      nvs_save_clock_config() - saves the current clock configuration
+ *
+ * SUMMARY:
+ *      Takes all of the clock configuration values and saves them to non
+ *      volatile storage.
+ *
+ * INPUT REQUIREMENTS:
+ *      ---
+ *
+ * OUTPUT GUARANTEES:
+ *      Returns an enum status (fail <= 0, success > 0)
+ **===< local >================================================================*/
+static STATUS_E nvs_save_clock_config( CLOCK_CONFIG* new_config_s )
+{
+    nvs_handle_t nvs_handle;
+    size_t config_size = sizeof( CLOCK_CONFIG );
+
+    esp_err_t err;
+    STATUS_E status_e = STATUS_OK;
+
+    // Check for differences to reduce memory wear
+    if( memcmp( new_config_s, &clock_config_s, config_size ) == 0 )
+    {
+        return STATUS_NO_CHANGE; // No change
+    }
+
+    // TODO: Sanity check the values
+
+    err = nvs_open( "clock", NVS_READWRITE, &nvs_handle );
+    if( err != ESP_OK )
+    {
+        ESP_LOGE("nvs_save_clock_config", "Could not open NVS! (%s)", esp_err_to_name(err));
+        return STATUS_ERR;
+    }
+
+    err = nvs_set_blob( nvs_handle, "clockconfig", new_config_s, config_size );
+    if( err != ESP_OK )
+    {
+        ESP_LOGE("nvs_save_clock_config", "Could not write to NVS! (%s)", esp_err_to_name(err));
+        return STATUS_ERR;
+    }
+
+    err = nvs_commit( nvs_handle );
+    if( err != ESP_OK )
+    {
+        ESP_LOGE("nvs_save_clock_config", "Could not save NVS! (%s)", esp_err_to_name(err));
+        return STATUS_ERR;
+    }
+
+    nvs_close( nvs_handle );
+    ESP_LOGW("nvs_save_clock_config", "Saved clock config to NVS.");
+    ESP_LOGI("nvs_save_clock_config", "Saved time: ");
+    // TODO: Convert the struct tm to a readable timestamp.
+
+    clock_config_s = *new_config_s;
+
+    return status_e;
+}
+
+/**===< local >================================================================
+ * NAME:
+ *      nvs_load_clock_config() - loads the current clock configuration
+ *
+ * SUMMARY:
+ *      Loads all of the clock configuration values from the on-board non
+ *      volatile storage.
+ *
+ * INPUT REQUIREMENTS:
+ *      ---
+ *
+ * OUTPUT GUARANTEES:
+ *      Returns an enum status (fail <= 0, success > 0)
+ **===< local >================================================================*/
+static STATUS_E nvs_load_clock_config( CLOCK_CONFIG* new_config_s )
+{
+    nvs_handle_t nvs_handle;
+    size_t config_size = sizeof( CLOCK_CONFIG );
+
+    esp_err_t err;
+    STATUS_E status_e = STATUS_OK;
+
+    err = nvs_open( "clock", NVS_READWRITE, &nvs_handle );
+    if( err != ESP_OK )
+    {
+        ESP_LOGE("nvs_load_clock_config", "Could not open NVS! (%s)", esp_err_to_name(err));
+        return STATUS_ERR;
+    }
+
+    err = nvs_get_blob( nvs_handle, "clockconfig", new_config_s, &config_size );
+    if( err != ESP_OK )
+    {
+        ESP_LOGE("nvs_load_clock_config", "Could not read from NVS! (%s)", esp_err_to_name(err));
+        return STATUS_ERR;
+    }
+
+    err = nvs_commit( nvs_handle );
+    if( err != ESP_OK )
+    {
+        ESP_LOGE("nvs_load_clock_config", "Could not save NVS! (%s)", esp_err_to_name(err));
+        return STATUS_ERR;
+    }
+
+    nvs_close( nvs_handle );
+    ESP_LOGW("nvs_load_clock_config", "Loaded clock config from NVS.");
+    ESP_LOGI("nvs_load_clock_config", "Loaded time: ");
+    // TODO: Convert the struct tm to a readable timestamp.
+
+    clock_config_s = *new_config_s;
+
+    return status_e;
+}
+
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
  * Timer callback - 1 ms
  *
  * DESCRIPTION:
- *      This function is called every 1 milliseconds. The purpose is to wake
+ *      This function is called every 1 millisecond. The purpose is to wake
  *      certain tasks periodically by setting their task notification bits.
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 void timer_1ms_callback(void *param)
 {
     TIMER_TickMsUpdate(); /* Updates the 1ms tick inside lib_timer */
-    //xEventGroupSetBits( rgbleds_flags, FLAG_1_MS );
+    //xEventGroupSetBits( heartbeat_flags, FLAG_1_MS );
 }
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
@@ -113,7 +220,7 @@ void timer_10ms_callback(void *param)
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 void timer_100ms_callback(void *param)
 {
-    xEventGroupSetBits( rgbleds_flags, FLAG_100_MS );
+    xEventGroupSetBits(heartbeat_flags, FLAG_100_MS );
 }
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
@@ -125,84 +232,109 @@ void timer_100ms_callback(void *param)
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 void timer_1sec_callback(void *param)
 {
-    xEventGroupSetBits( rgbleds_flags, FLAG_1_SEC );
+    xEventGroupSetBits(heartbeat_flags, FLAG_1_SEC );
 }
 
 /*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~
- * TASK: task_rgbleds
+ * TASK: task_heartbeat
  * PRIO: 2 - default priority (runs constantly)
  *
  * DESCRIPTION:
- *      This task handles writing to the RGB leds and updating them.
- * 
- * TASK NOTIFICATION BITS:
- *      bit 0:      100ms flag
- *      bit 1:      n/a
- *      bit 2:      n/a
- *      bit 3:      n/a
+ *      This task handles periodic behaviour, primarily for testing.
+ *
  *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
-void task_rgbleds( void* params )
+void task_heartbeat(void* params )
 {
-    char* LOG_TAG = "task_rgbleds";
-    MSG_DATA rec_msg; /* Variable for receiving a message */
+    char* LOG_TAG = "task_heartbeat";
+
+    EventBits_t new_msg_flag_s = 0x80u;
+    MESSAGE_CONTENT_T rec_msg;
+    MESSAGE_RECEIVER_T inbox = {
+            &heartbeat_flags,
+            new_msg_flag_s,
+            q_heartbeat_task
+    };
 
     EventBits_t flags_to_wait;
-    flags_to_wait = FLAG_100_MS | FLAG_1_SEC;
+    flags_to_wait = FLAG_100_MS | FLAG_1_SEC | new_msg_flag_s;
 
     UINT8 active_leds[10] = {0}; // Index of which LEDs are active
     
     UINT8 colorIndex_UC = COLOR_Cyan;
     RGB_COLOR_PCT led_color = RGB_LED_default_colors_S[ colorIndex_UC ];
 
+    MESSAGING_subscribe_to_topic(MSG_BUTTONS, &inbox);
+
+    // Temporarily here for testing
+    BUTTON_init();
+
     while(1)
     {
         /* Wait for any of the flags to be set (wait all = false, auto clear = false) */
-        xEventGroupWaitBits( rgbleds_flags, flags_to_wait, false, false, portMAX_DELAY );
+        xEventGroupWaitBits(heartbeat_flags, flags_to_wait, false, false, portMAX_DELAY );
+
+        /* New message */
+        if(xEventGroupGetBits(heartbeat_flags) & new_msg_flag_s)
+        {
+            xQueueReceive(q_heartbeat_task, &rec_msg, 0);
+
+            if(rec_msg.topic_e == MSG_BUTTONS)
+            {
+                CHAR p_button_str_c[40];
+                memset(p_button_str_c, 0, sizeof(p_button_str_c));
+                BUTTON_event_to_string(&rec_msg.btn_event_s, p_button_str_c, sizeof(p_button_str_c)-1);
+
+                ESP_LOGI(LOG_TAG, "Button message: %s", p_button_str_c);
+
+                // If the "light" button was just pressed, toggle the "status" LED
+                if(BUTTON_check_event(&rec_msg.btn_event_s, BTN_LIGHT, BTN_PRESS_RELEASED))
+                {
+                    ESP_LOGI(LOG_TAG, "Toggling the 'STATUS' LED.");
+                    gpio_set_level(GPIO_NUM_10, gpio_get_level(GPIO_NUM_10) ? 0 : 1);
+                }
+
+                // If the "light" button was just held, toggle the "wifi" LED
+                if(BUTTON_check_event(&rec_msg.btn_event_s, BTN_LIGHT, BTN_HOLD_RELEASED))
+                {
+                    ESP_LOGI(LOG_TAG, "Toggling the 'INTERNET' LED.");
+                    gpio_set_level(GPIO_NUM_8, gpio_get_level(GPIO_NUM_8) ? 0 : 1);
+                }
+            }
+
+            /* Clear the message flag if there are none left */
+            if(uxQueueMessagesWaiting(q_heartbeat_task) == 0)
+            {
+                xEventGroupClearBits(heartbeat_flags, new_msg_flag_s);
+            }
+        }
 
         /* FLAG_100_MS - update */
-        if( xEventGroupGetBits( rgbleds_flags ) & FLAG_100_MS )
+        if(xEventGroupGetBits(heartbeat_flags ) & FLAG_100_MS )
         {
-            // /* Increment the first led */
-            // active_leds[ 0 ]++;
-            // if( active_leds[ 0 ] > ( WC_RGB_LED_COUNT - 1 ) )
-            // {
-            //     active_leds[ 0 ] -= 100;
-            //     if( ++colorIndex_UC >= NUM_DEFAULT_COLORS )
-            //     {
-            //         colorIndex_UC = 0;
-            //     }
-            //     led_color = RGB_LED_default_colors_S[ colorIndex_UC ];
-            // }
-
-            // /* Increment the rest of the leds */
-            // for( INT8 i = 1; i < 10; i++ )
-            // {
-            //     active_leds[ i ] = active_leds[ i - 1 ] + 1;
-            //     if( active_leds[ i ] > ( WC_RGB_LED_COUNT - 1 ) )
-            //     {
-            //         active_leds[ i ] -= 100;
-            //     }
-            // }
-
-            // /* Set the LED colors */
-            // for( INT8 i = 9; i >= 0; i-- )
-            // {
-            //     RGB_LED_SetPixelColor( active_leds[ i ], led_color, 10 * (i + 1) );
-            // }
-
-            // /* Write the LEDs to the screen */
-            // RGB_LED_TransmitColors();
-
-            // /* Log the leading LED */
-            // ESP_LOGI( LOG_TAG, "LED index: %d", active_leds[9] );
+            // The button handler can be done via polling, or after detecting interrupts.
+            // This can be done anywhere, currently here for testing.
+            BUTTON_poll();
+            if(BUTTON_update_state_machine() == STATUS_NEW_EVENT)
+            {
+                if(BUTTON_send_events_to_queue() >= STATUS_OK)
+                {
+                    ESP_LOGI(LOG_TAG, "Sent new button events to queue.");
+                }
+                else
+                {
+                    ESP_LOGE(LOG_TAG, "Failed to send new button events to queue!");
+                }
+            }
 
             /* Clear FLAG_100_MS */
-            xEventGroupClearBits( rgbleds_flags, FLAG_100_MS );
+            xEventGroupClearBits(heartbeat_flags, FLAG_100_MS );
         }
 
         /* FLAG_1_SEC - update */
-        if( xEventGroupGetBits( rgbleds_flags ) & FLAG_1_SEC )
+        if(xEventGroupGetBits(heartbeat_flags ) & FLAG_1_SEC )
         {
+            static UINT32 sec_count = 0;
+
             led_color = RGB_LED_default_colors_S[ colorIndex_UC ];
 
             CLOCK_TestWords( led_color );
@@ -213,8 +345,22 @@ void task_rgbleds( void* params )
                 CLOCK_UpdateTime(); // test a phrase
             }
 
+            sec_count++;
+            if(sec_count % 10 == 0)
+            {
+                struct tm rtc_time_s;
+                if(RTC_get_time(&rtc_time_s) >= STATUS_OK)
+                {
+                    ESP_LOGI(LOG_TAG, "Retrieved RTC time: %s", asctime(&rtc_time_s));
+                }
+                else
+                {
+                    ESP_LOGE(LOG_TAG, "Failed to get time from RTC.");
+                }
+            }
+
             /* Clear FLAG_1_SEC */
-            xEventGroupClearBits( rgbleds_flags, FLAG_1_SEC );
+            xEventGroupClearBits(heartbeat_flags, FLAG_1_SEC );
         }
     }
 }
@@ -231,13 +377,17 @@ void app_main(void)
     /* Hardware delays (capacitors, etc) */
 
     /* Set up event groups */
-    rgbleds_flags = xEventGroupCreate();
+    heartbeat_flags = xEventGroupCreate();
 
     /* Set up queues */
-    q_order_rgbleds_task = xQueueCreate( 5, sizeof(MSG_DATA) );
+    q_heartbeat_task = xQueueCreate( 10, sizeof(MESSAGE_CONTENT_T) );
 
     /* Set up other peripherals */
     RGB_LED_Init();
+    RTC_init(PCF85263A_ADDR_7BIT);
+
+    /* Initialize I2C driver */
+
 
     /* Set up timers */
     /* 1 ms timer */
@@ -275,5 +425,9 @@ void app_main(void)
     /* Set up interrupts */
 
     /* Set up tasks */
-    xTaskCreate( &task_rgbleds, "RGB Led Task", 4096, NULL, 2, &h_task_rgbleds );
+    xTaskCreate(&task_heartbeat, "RGB Led Task", 4096, NULL, 2, &h_task_heartbeat );
+
+    /* GPIO settings */
+    gpio_set_direction(GPIO_NUM_8, GPIO_MODE_INPUT_OUTPUT);
+    gpio_set_direction(GPIO_NUM_10, GPIO_MODE_INPUT_OUTPUT);
 }
