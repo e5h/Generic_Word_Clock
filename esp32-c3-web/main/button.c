@@ -47,7 +47,7 @@ static gpio_num_t p_button_gpio_pins_e[ NUM_BUTTONS ] =
     GPIO_NUM_4,     // Wifi button          (0) mapped to G4
     GPIO_NUM_6,     // Color button         (1) mapped to G6
     GPIO_NUM_5,     // Light button         (2) mapped to G5
-    GPIO_NUM_3      // M5 builtin button    (3) mapped to G3
+    //GPIO_NUM_3      // M5 builtin button    (3) mapped to G3
 };
 
 CHAR* p_button_names_c[] = { "Wifi", "Color", "Light", "M5" };
@@ -128,6 +128,11 @@ STATUS_E BUTTON_init()
         p_button_statuses_s[ button_index_i32 ].state_info_s.state_e = BTN_STATE_IDLE;
         p_button_statuses_s[ button_index_i32 ].event_s.button_e = button_index_i32;
         p_button_statuses_s[ button_index_i32 ].event_s.event_e = BTN_NO_EVENT;
+
+        // Configure the GPIO
+        gpio_set_direction(p_button_gpio_pins_e[ button_index_i32 ], GPIO_MODE_INPUT_OUTPUT);
+        gpio_pullup_dis(p_button_gpio_pins_e[ button_index_i32 ] );
+        gpio_pulldown_dis(p_button_gpio_pins_e[ button_index_i32 ] );
     }
 
     return STATUS_OK;

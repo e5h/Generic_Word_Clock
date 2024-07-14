@@ -35,7 +35,7 @@ typedef enum{
     BTN_WIFI                    = 0,        // Button for all wifi related functions
     BTN_COLOR                   = 1,        // Button for changing colors
     BTN_LIGHT                   = 2,        // Button for cycling brightness (may be unused)
-    BTN_M5STAMP                 = 3,        // M5Stamp built-in button with RGB led
+    //BTN_M5STAMP                 = 3,        // M5Stamp built-in button with RGB led - ERROR, might be stuck?
 
     /* Number of buttons */
     NUM_BUTTONS,
