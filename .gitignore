@@ -1,6 +1,11 @@
 **/.devcontainer/
 **/.vscode/
 **/build/
-/esp32-c3-web/cmake-build-debug*/
+**/cmake-build-debug*/
 **/.idea/
 **/*.bkp
+
+/**/sdkconfig
+/**/sdkconfig.old
+/esp32-c3-web/sdkconfig
+/esp32-c3-web/sdkconfig.old
