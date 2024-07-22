@@ -371,6 +371,8 @@ void wifi_event_handler(void* event_handler_arg, esp_event_base_t event_base, in
  **===< global >===============================================================*/
 void CONNECT_init(void)
 {
+    wifi_events = xEventGroupCreate();
+
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     wifi_init_config_t wifi_init_config = WIFI_INIT_CONFIG_DEFAULT();
@@ -392,34 +394,36 @@ void CONNECT_init(void)
  * INPUT REQUIREMENTS:
  *      ssid - valid ssid
  *      pass - correct password for ssid
- *      timeout - amount of time to wait for connection.
+ *      timeout_ms - amount of time to wait for connection.
  *
  * OUTPUT GUARANTEES:
  *      Returns ESP_OK if the device connected and received an IP.
  *      Returns ESP_FAIL if the device was unable to connect.
  **===< global >===============================================================*/
-esp_err_t CONNECT_wifi_sta(const char* ssid, const char* pass, int timeout)
+esp_err_t CONNECT_wifi_sta(const char* ssid, const char* pass, int timeout_ms)
 {
-    wifi_events = xEventGroupCreate();
+    esp_netif_destroy(esp_netif);
+    esp_netif = esp_netif_create_default_wifi_sta();
+    ESP_ERROR_CHECK(esp_netif_set_hostname(esp_netif, CONFIG_ESP_DEV_HOSTNAME));
+
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 
     wifi_config_t wifi_config;
     memset(&wifi_config, 0, sizeof(wifi_config_t));
     strncpy((char*)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid) - 1);
     strncpy((char*)wifi_config.sta.password, pass, sizeof(wifi_config.sta.password) - 1);
 
-    esp_netif = esp_netif_create_default_wifi_sta();
-    ESP_ERROR_CHECK(esp_netif_set_hostname(esp_netif, CONFIG_ESP_DEV_HOSTNAME));
-
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    EventBits_t result = xEventGroupWaitBits(wifi_events, FLAG_ASSIGNED_IP | FLAG_DISCONNECTED, pdTRUE, pdFALSE, pdMS_TO_TICKS(timeout));
+    EventBits_t result = xEventGroupWaitBits(wifi_events, FLAG_ASSIGNED_IP | FLAG_DISCONNECTED, pdTRUE, pdFALSE, pdMS_TO_TICKS(timeout_ms));
 
-    if(result == FLAG_ASSIGNED_IP)
+    if((result & FLAG_ASSIGNED_IP) == FLAG_ASSIGNED_IP)
     {
+        ESP_LOGI("CONNECT_wifi_sta", "Was assigned IP, connection successful.");
         return ESP_OK;
     }
+    ESP_LOGI("CONNECT_wifi_sta", "WiFi disconnected or timed out, connection unsuccessful.");
     return ESP_FAIL;
 }
 
@@ -438,16 +442,18 @@ esp_err_t CONNECT_wifi_sta(const char* ssid, const char* pass, int timeout)
  **===< global >===============================================================*/
 void CONNECT_wifi_ap(const char* ssid, const char* pass)
 {
+    esp_netif_destroy(esp_netif);
+    esp_netif = esp_netif_create_default_wifi_ap();
+    ESP_ERROR_CHECK(esp_netif_set_hostname(esp_netif, CONFIG_ESP_DEV_HOSTNAME));
+
     wifi_config_t wifi_config;
     memset(&wifi_config, 0, sizeof(wifi_config_t));
     strncpy((char *)wifi_config.ap.ssid, ssid, sizeof(wifi_config.sta.ssid) - 1);
     strncpy((char *)wifi_config.ap.password, pass, sizeof(wifi_config.sta.password) - 1);
+
     wifi_config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
     wifi_config.ap.max_connection = 4;
     wifi_config.ap.beacon_interval = 100;
-
-    esp_netif = esp_netif_create_default_wifi_ap();
-    ESP_ERROR_CHECK(esp_netif_set_hostname(esp_netif, CONFIG_ESP_DEV_HOSTNAME));
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_config));

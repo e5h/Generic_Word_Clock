@@ -39,7 +39,7 @@
 /*=============================================================================*/
 
 void        CONNECT_init(void);
-esp_err_t   CONNECT_wifi_sta(const char* ssid, const char* pass, int timeout);
+esp_err_t   CONNECT_wifi_sta(const char* ssid, const char* pass, int timeout_ms);
 void        CONNECT_wifi_ap(const char* ssid, const char* pass);
 void        CONNECT_wifi_disconnect(void);
 extern void CONNECT_stop_interfaces(void);

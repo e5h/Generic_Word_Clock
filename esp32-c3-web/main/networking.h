@@ -93,7 +93,7 @@
 #elif defined(CONFIG_ESP_TZ_STRING_NFT_1DFT)
     #define BASE_TZ_STRING "NFT-1DFT"
 #else
-    #define BASE_TZ_STRING CONFIG_ESP_TZ_STRING
+    #warning "No timezone!"
 #endif
 
 /*=============================================================================*/

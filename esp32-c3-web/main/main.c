@@ -26,7 +26,7 @@
 
 #include "task_display.h"
 // task device
-// task network
+#include "task_network.h"
 
 #include "esp_timer.h"
 #include "nvs_flash.h"
@@ -385,9 +385,7 @@ void app_main(void)
     /* Set up other peripherals */
     RGB_LED_Init();
     RTC_init(PCF85263A_ADDR_7BIT);
-
-    /* Initialize I2C driver */
-
+    ESP_ERROR_CHECK( nvs_flash_init() );
 
     /* Set up timers */
     /* 1 ms timer */
@@ -426,6 +424,7 @@ void app_main(void)
 
     /* Set up tasks */
     xTaskCreate(&task_heartbeat, "RGB Led Task", 4096, NULL, 2, &h_task_heartbeat );
+    TASK_NETWORK_create();
 
     /* GPIO settings */
     gpio_set_direction(GPIO_NUM_8, GPIO_MODE_INPUT_OUTPUT);

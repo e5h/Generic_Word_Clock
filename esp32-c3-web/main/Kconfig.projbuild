@@ -28,215 +28,180 @@ config DST_END
     help
         Set the rule for when DST ends. Format: M[mth].[week].[day]
 
-config ESP_TZ_STRING
-    string "Time Zone String"
-    default "CUT0GDT"
-    help
-        Set the time zone string for your location.
-
 choice
     prompt "Select Time Zone"
     default ESP_TZ_STRING_CUT0GDT
 
 config ESP_TZ_STRING_CUT0GDT
     bool "Coordinated Universal Time (CUT)"
-    select ESP_TZ_STRING
     help
         CUT0GDT
         Coordinated Universal Time
 
 config ESP_TZ_STRING_GMT0BST
     bool "United Kingdom (CUT)"
-    select ESP_TZ_STRING
     help
         GMT0BST
         United Kingdom
 
 config ESP_TZ_STRING_AZOREST1AZOREDT
     bool "Azores, Cape Verde (CUT -1)"
-    select ESP_TZ_STRING
     help
         AZOREST1AZOREDT
         Azores, Cape Verde
 
 config ESP_TZ_STRING_FALKST2FALKDT
     bool "Falkland Islands (CUT -2)"
-    select ESP_TZ_STRING
     help
         FALKST2FALKDT
         Falkland Islands
 
 config ESP_TZ_STRING_GRNLNDST3GRNLNDDT
     bool "Greenland, East Brazil (CUT -3)"
-    select ESP_TZ_STRING
     help
         GRNLNDST3GRNLNDDT
         Greenland, East Brazil
 
 config ESP_TZ_STRING_AST4ADT
     bool "Central Brazil (CUT -4)"
-    select ESP_TZ_STRING
     help
         AST4ADT
         Central Brazil
 
 config ESP_TZ_STRING_EST5EDT
     bool "Eastern United States, Colombia (CUT -5)"
-    select ESP_TZ_STRING
     help
         EST5EDT
         Eastern United States, Colombia
 
 config ESP_TZ_STRING_CST6CDT
     bool "Central United States, Honduras (CUT -6)"
-    select ESP_TZ_STRING
     help
         CST6CDT
         Central United States, Honduras
 
 config ESP_TZ_STRING_MST7MDT
     bool "Mountain United States (CUT -7)"
-    select ESP_TZ_STRING
     help
         MST7MDT
         Mountain United States
 
 config ESP_TZ_STRING_PST8PDT
     bool "Pacific United States, Yukon (CUT -8)"
-    select ESP_TZ_STRING
     help
         PST8PDT
         Pacific United States, Yukon
 
 config ESP_TZ_STRING_AST9ADT_ALASKA
     bool "Alaska (CUT -9)"
-    select ESP_TZ_STRING
     help
         AST9ADT
         Alaska
 
 config ESP_TZ_STRING_HST10HDT
     bool "Hawaii, Aleutian Islands (CUT -10)"
-    select ESP_TZ_STRING
     help
         HST10HDT
         Hawaii, Aleutian Islands
 
 config ESP_TZ_STRING_BST11BDT
     bool "Bering Strait (CUT -11)"
-    select ESP_TZ_STRING
     help
         BST11BDT
         Bering Strait
 
 config ESP_TZ_STRING_NZST_12NZDT
     bool "New Zealand (CUT +12)"
-    select ESP_TZ_STRING
     help
         NZST-12NZDT
         New Zealand
 
 config ESP_TZ_STRING_MET_11METDT
     bool "Solomon Islands (CUT +11)"
-    select ESP_TZ_STRING
     help
         MET-11METDT
         Solomon Islands
 
 config ESP_TZ_STRING_EET_10EETDT
     bool "Eastern Australia (CUT +10)"
-    select ESP_TZ_STRING
     help
         EET-10EETDT
         Eastern Australia
 
 config ESP_TZ_STRING_JST_9JSTDT
     bool "Japan (CUT +9)"
-    select ESP_TZ_STRING
     help
         JST-9JSTDT
         Japan
 
 config ESP_TZ_STRING_KORST_9KORDT
     bool "Korea (CUT +9)"
-    select ESP_TZ_STRING
     help
         KORST-9KORDT
         Korea
 
 config ESP_TZ_STRING_WAUST_8WAUDT
     bool "Western Australia (CUT +8)"
-    select ESP_TZ_STRING
     help
         WAUST-8WAUDT
         Western Australia
 
 config ESP_TZ_STRING_TAIST_8TAIDT
     bool "Taiwan (CUT +8)"
-    select ESP_TZ_STRING
     help
         TAIST-8TAIDT
         Taiwan
 
 config ESP_TZ_STRING_THAIST_7THAIDT
     bool "Thailand (CUT +7)"
-    select ESP_TZ_STRING
     help
         THAIST-7THAIDT
         Thailand
 
 config ESP_TZ_STRING_TASHST_6TASHDT
     bool "Central Asia (CUT +6)"
-    select ESP_TZ_STRING
     help
         TASHST-6TASHDT
         Central Asia
 
 config ESP_TZ_STRING_PAKST_5PAKDT
     bool "Pakistan (CUT +5)"
-    select ESP_TZ_STRING
     help
         PAKST-5PAKDT
         Pakistan
 
 config ESP_TZ_STRING_WST_4WDT
     bool "Gorki, Central Asia, Oman (CUT +4)"
-    select ESP_TZ_STRING
     help
         WST-4WDT
         Gorki, Central Asia, Oman
 
 config ESP_TZ_STRING_MEST_3MEDT
     bool "Turkey (CUT +3)"
-    select ESP_TZ_STRING
     help
         MEST-3MEDT
         Turkey
 
 config ESP_TZ_STRING_SAUST_3SAUDT
     bool "Saudi Arabia (CUT +3)"
-    select ESP_TZ_STRING
     help
         SAUST-3SAUDT
         Saudi Arabia
 
 config ESP_TZ_STRING_WET_2WET
     bool "Finland (CUT +2)"
-    select ESP_TZ_STRING
     help
         WET-2WET
         Finland
 
 config ESP_TZ_STRING_USAST_2USADT
     bool "South Africa (CUT +2)"
-    select ESP_TZ_STRING
     help
         USAST-2USADT
         South Africa
 
 config ESP_TZ_STRING_NFT_1DFT
     bool "Norway (CUT +1)"
-    select ESP_TZ_STRING
     help
         NFT-1DFT
         Norway
