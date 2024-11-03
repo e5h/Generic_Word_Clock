@@ -1,0 +1,11 @@
+﻿Part,Qnty.,Description,Supplier
+LED Strip,1,WS2812B (or similar) 60 LED / meter strip,"[Amazon #1](https://www.amazon.ca/BTF-LIGHTING-Individual-Addressable-60Pixels-Non-Waterproof/dp/B088BPGMXB), [Amazon #2](https://www.amazon.ca/gp/product/B014R5PC42)"
+M3 Heat Set Nuts,4,"Brass threaded nuts, buy a kit",[Amazon #3](https://www.amazon.ca/Assortment-Premium-Threaded-Embedment-Printing/dp/B0CTDBXGCF)
+M4 Heat Set Nuts,4,"Brass threaded nuts, buy a kit",[Amazon #3](https://www.amazon.ca/Assortment-Premium-Threaded-Embedment-Printing/dp/B0CTDBXGCF)
+M3x8 Screw,4,"Machine screw, any will do",[Amazon #4](https://www.amazon.ca/Hilitchi-510-Pcs-Button-Socket-Assortment/dp/B073SWNV5N)
+M4x8 Screw,4,"Button cap, but any will do",[Amazon #4](https://www.amazon.ca/Hilitchi-510-Pcs-Button-Socket-Assortment/dp/B073SWNV5N)
+Hot Glue,,For the LED strips / strain relief,
+Solder,,Any,
+Wire,,"3 conductor wire for LED strip to controller, 1 conductor for connections",
+USB-C Charging Cable,1,Slim right angle cable works best,[Amazon #5](https://www.amazon.ca/Agtray-4-Pack-Braided-Compatible-Samsung/dp/B0B6B7NK35)
+USB Power Supply,1,>5W properly rated supply,[Digikey](https://www.digikey.ca/en/products/detail/qualtek/QFWC-10-05/9771106)
