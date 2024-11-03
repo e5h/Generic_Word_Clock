@@ -1,0 +1,14 @@
+Default clock layout
+
+<BEGIN>
+I T U I S K A X M Y
+T W E N T Y H A L F
+H A P P Y H F I V E
+T E N Q U A R T E R
+T O P A S T B D A Y
+O N E F O U R T W O
+F I V E S I X T E N
+T H R E E S E V E N
+T W E L V E I G H T
+N I N E L E V E N J
+<END>
